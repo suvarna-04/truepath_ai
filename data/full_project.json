@@ -1,0 +1,3063 @@
+{
+  "project_id": "AWS-COST-OPT-2026",
+  "title": "AWS Cloud Cost Optimization 2026",
+  "intent": "Reduce AWS cloud cost by 25 percent across our production workloads over the next two quarters by rightsizing over-provisioned EC2, RDS, and EBS resources, adopting Savings Plans and Reserved Instances for steady-state workloads, decommissioning idle services and unused storage, and tiering cold data to Glacier and Intelligent-Tiering.",
+  "goals": [
+    "Rightsize over-provisioned EC2, RDS, EBS, and Lambda resources flagged by AWS Compute Optimizer and Trusted Advisor",
+    "Adopt Savings Plans and 3-year Reserved Instances for steady-state EC2, EKS, and Aurora workloads",
+    "Decommission idle clusters, retired services, and unattached resources older than 30 days",
+    "Apply S3 lifecycle and Intelligent-Tiering policies to move cold data to Glacier",
+    "Track monthly run-rate against the 25 percent reduction target via CloudWatch dashboards and AWS Budgets alerts"
+  ],
+  "summary": {
+    "total_tickets": 90,
+    "total_sprints": 3,
+    "projected_monthly_impact_usd": 78930,
+    "savings_tickets": 34,
+    "spend_increasing_tickets": 33,
+    "ground_truth_theme_distribution": {
+      "cleanup": 13,
+      "infrastructure_scaling": 13,
+      "efficiency": 10,
+      "expansion": 10,
+      "rightsizing": 8,
+      "bug_fixes": 7,
+      "feature_development": 7,
+      "cost_optimization": 6,
+      "security": 5,
+      "maintenance": 4,
+      "reliability": 4,
+      "observability": 3
+    }
+  },
+  "sprints": [
+    {
+      "sprint_number": 1,
+      "month": 4,
+      "month_label": "April 2026",
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "ticket_count": 30,
+      "projected_monthly_impact_usd": -124290,
+      "savings_tickets": 19,
+      "spend_increasing_tickets": 1
+    },
+    {
+      "sprint_number": 2,
+      "month": 5,
+      "month_label": "May 2026",
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "ticket_count": 30,
+      "projected_monthly_impact_usd": 15190,
+      "savings_tickets": 11,
+      "spend_increasing_tickets": 12
+    },
+    {
+      "sprint_number": 3,
+      "month": 6,
+      "month_label": "June 2026",
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "ticket_count": 30,
+      "projected_monthly_impact_usd": 188030,
+      "savings_tickets": 4,
+      "spend_increasing_tickets": 20
+    }
+  ],
+  "tasks": [
+    {
+      "id": "FIN-101",
+      "title": "Rightsize over-provisioned EC2 fleet in payments-prod",
+      "description": "Rightsize over-provisioned EC2 fleet in payments-prod. Audit shows m5.4xlarge nodes in payments-prod averaging 18 percent CPU over 30 days. Downsize to m5.2xlarge in two waves, confirm p99 latency unchanged, then commit the change in Terraform.",
+      "description_raw": "Audit shows m5.4xlarge nodes in payments-prod averaging 18 percent CPU over 30 days. Downsize to m5.2xlarge in two waves, confirm p99 latency unchanged, then commit the change in Terraform.",
+      "type": "Story",
+      "status": "In Progress",
+      "priority": "High",
+      "story_points": 5,
+      "assignee": "r.patel@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "rightsizing",
+        "ec2"
+      ],
+      "components": [
+        "payments"
+      ],
+      "aws_services": [
+        "EC2"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "rightsizing",
+      "estimated_monthly_impact_usd": -22000,
+      "created_at": "2026-01-09",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-102",
+      "title": "Purchase 1-year Compute Savings Plan for stable EKS baseline",
+      "description": "Purchase 1-year Compute Savings Plan for stable EKS baseline. Last 90 days show a stable 320 vCPU baseline across the platform-prod EKS cluster. Buy a 1-year no-upfront Compute Savings Plan to cover that baseline; everything above stays on-demand.",
+      "description_raw": "Last 90 days show a stable 320 vCPU baseline across the platform-prod EKS cluster. Buy a 1-year no-upfront Compute Savings Plan to cover that baseline; everything above stays on-demand.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 3,
+      "assignee": "k.menon@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "savings-plan"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "EC2",
+        "Savings Plans"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cost_optimization",
+      "estimated_monthly_impact_usd": -31000,
+      "created_at": "2026-01-09",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-103",
+      "title": "Decommission idle RDS instance reporting-legacy-db",
+      "description": "Decommission idle RDS instance reporting-legacy-db. Reporting-legacy-db has had zero connections for 47 days and the dependent service was retired in Q4. Snapshot to S3 Glacier, validate snapshot, then delete the instance.",
+      "description_raw": "Reporting-legacy-db has had zero connections for 47 days and the dependent service was retired in Q4. Snapshot to S3 Glacier, validate snapshot, then delete the instance.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 2,
+      "assignee": "s.huang@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "cleanup",
+        "rds"
+      ],
+      "components": [
+        "data-platform"
+      ],
+      "aws_services": [
+        "RDS",
+        "S3"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cleanup",
+      "estimated_monthly_impact_usd": -1800,
+      "created_at": "2026-01-09",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-104",
+      "title": "Delete 3.2 TB of unattached EBS volumes flagged by Trusted Advisor",
+      "description": "Delete 3.2 TB of unattached EBS volumes flagged by Trusted Advisor. Trusted Advisor lists 412 unattached EBS volumes older than 30 days. Cross-check against the asset inventory, snapshot the ones with PII, and delete the rest in batches of 50.",
+      "description_raw": "Trusted Advisor lists 412 unattached EBS volumes older than 30 days. Cross-check against the asset inventory, snapshot the ones with PII, and delete the rest in batches of 50.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 3,
+      "assignee": "r.patel@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "cleanup",
+        "ebs"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "EBS"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cleanup",
+      "estimated_monthly_impact_usd": -2400,
+      "created_at": "2026-01-09",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-105",
+      "title": "Apply S3 lifecycle policy to move logs to Glacier after 30 days",
+      "description": "Apply S3 lifecycle policy to move logs to Glacier after 30 days. Application logs in s3://corp-app-logs grow ~1.4 TB per month and are queried <1 percent after 14 days. Apply lifecycle rule: Standard -> IA at 14 days, Glacier at 30 days.",
+      "description_raw": "Application logs in s3://corp-app-logs grow ~1.4 TB per month and are queried <1 percent after 14 days. Apply lifecycle rule: Standard -> IA at 14 days, Glacier at 30 days.",
+      "type": "Story",
+      "status": "In Progress",
+      "priority": "Medium",
+      "story_points": 3,
+      "assignee": "n.oduya@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "s3",
+        "lifecycle"
+      ],
+      "components": [
+        "observability"
+      ],
+      "aws_services": [
+        "S3"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "efficiency",
+      "estimated_monthly_impact_usd": -4200,
+      "created_at": "2026-01-09",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-106",
+      "title": "Right-size Aurora reader pool in checkout-prod",
+      "description": "Right-size Aurora reader pool in checkout-prod. Aurora reader pool has 5 r6g.2xlarge readers averaging 11 percent CPU. Reduce to 3 readers and validate replica lag stays under 200 ms during peak.",
+      "description_raw": "Aurora reader pool has 5 r6g.2xlarge readers averaging 11 percent CPU. Reduce to 3 readers and validate replica lag stays under 200 ms during peak.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 5,
+      "assignee": "s.huang@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "rightsizing",
+        "aurora"
+      ],
+      "components": [
+        "checkout"
+      ],
+      "aws_services": [
+        "RDS Aurora"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "rightsizing",
+      "estimated_monthly_impact_usd": -9600,
+      "created_at": "2026-01-09",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-107",
+      "title": "Convert nightly batch jobs from on-demand to Spot",
+      "description": "Convert nightly batch jobs from on-demand to Spot. Nightly ETL workers currently run on on-demand m5.xlarge. Move to Spot via EKS managed node group with on-demand fallback. Idempotent jobs, retries already in place.",
+      "description_raw": "Nightly ETL workers currently run on on-demand m5.xlarge. Move to Spot via EKS managed node group with on-demand fallback. Idempotent jobs, retries already in place.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 8,
+      "assignee": "j.alvarez@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "spot",
+        "batch"
+      ],
+      "components": [
+        "data-platform"
+      ],
+      "aws_services": [
+        "EC2",
+        "EKS"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cost_optimization",
+      "estimated_monthly_impact_usd": -7800,
+      "created_at": "2026-01-10",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-108",
+      "title": "Tag all untagged resources with cost-center and owner",
+      "description": "Tag all untagged resources with cost-center and owner. CUR shows 14 percent of monthly spend on resources without cost-center / owner tags. Roll out IAM SCP to deny untagged resource creation, then backfill tags via inventory job.",
+      "description_raw": "CUR shows 14 percent of monthly spend on resources without cost-center / owner tags. Roll out IAM SCP to deny untagged resource creation, then backfill tags via inventory job.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 5,
+      "assignee": "n.oduya@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "tagging",
+        "governance"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "IAM",
+        "Cost Explorer"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "efficiency",
+      "estimated_monthly_impact_usd": -1500,
+      "created_at": "2026-01-10",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-109",
+      "title": "Decommission deprecated Elasticsearch domain search-v1",
+      "description": "Decommission deprecated Elasticsearch domain search-v1. search-v1 was replaced by search-v2 last quarter but still runs at 6 nodes. Confirm no inbound traffic for 30 days, snapshot, then tear down via Terraform.",
+      "description_raw": "search-v1 was replaced by search-v2 last quarter but still runs at 6 nodes. Confirm no inbound traffic for 30 days, snapshot, then tear down via Terraform.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 3,
+      "assignee": "r.patel@example.com",
+      "reporter": "j.alvarez@example.com",
+      "labels": [
+        "finops",
+        "cleanup",
+        "opensearch"
+      ],
+      "components": [
+        "search"
+      ],
+      "aws_services": [
+        "OpenSearch"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cleanup",
+      "estimated_monthly_impact_usd": -5400,
+      "created_at": "2026-01-10",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-110",
+      "title": "Adopt Graviton (m7g) for stateless API tier",
+      "description": "Adopt Graviton (m7g) for stateless API tier. Benchmark stateless API tier on Graviton m7g.large; ARM-compatible base image already exists. Roll out canary at 5 percent, then 50 percent, then 100 percent if p99 latency holds.",
+      "description_raw": "Benchmark stateless API tier on Graviton m7g.large; ARM-compatible base image already exists. Roll out canary at 5 percent, then 50 percent, then 100 percent if p99 latency holds.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 8,
+      "assignee": "j.alvarez@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "graviton",
+        "rightsizing"
+      ],
+      "components": [
+        "api-gateway"
+      ],
+      "aws_services": [
+        "EC2",
+        "EKS"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "rightsizing",
+      "estimated_monthly_impact_usd": -14000,
+      "created_at": "2026-01-10",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-111",
+      "title": "Reduce CloudWatch log retention from 365 to 90 days",
+      "description": "Reduce CloudWatch log retention from 365 to 90 days. Default log retention across 217 log groups is 365 days. Compliance requires 90. Update via AWS Config rule and remediate.",
+      "description_raw": "Default log retention across 217 log groups is 365 days. Compliance requires 90. Update via AWS Config rule and remediate.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Low",
+      "story_points": 2,
+      "assignee": "n.oduya@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "cleanup",
+        "cloudwatch"
+      ],
+      "components": [
+        "observability"
+      ],
+      "aws_services": [
+        "CloudWatch",
+        "AWS Config"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cleanup",
+      "estimated_monthly_impact_usd": -2100,
+      "created_at": "2026-01-10",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-112",
+      "title": "Consolidate duplicate NAT Gateways across dev VPCs",
+      "description": "Consolidate duplicate NAT Gateways across dev VPCs. Six dev VPCs each run their own NAT Gateway at ~$32/month plus data charges. Consolidate to a shared egress VPC via Transit Gateway.",
+      "description_raw": "Six dev VPCs each run their own NAT Gateway at ~$32/month plus data charges. Consolidate to a shared egress VPC via Transit Gateway.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 5,
+      "assignee": "s.huang@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "networking",
+        "cleanup"
+      ],
+      "components": [
+        "networking"
+      ],
+      "aws_services": [
+        "VPC",
+        "Transit Gateway",
+        "NAT Gateway"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "efficiency",
+      "estimated_monthly_impact_usd": -3600,
+      "created_at": "2026-01-11",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-113",
+      "title": "Schedule non-prod EKS clusters to scale to zero overnight",
+      "description": "Schedule non-prod EKS clusters to scale to zero overnight. Dev and staging EKS clusters run 24x7 but get zero traffic 19:00-08:00. Use Karpenter scheduled scaling to drain to zero nodes overnight.",
+      "description_raw": "Dev and staging EKS clusters run 24x7 but get zero traffic 19:00-08:00. Use Karpenter scheduled scaling to drain to zero nodes overnight.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 5,
+      "assignee": "j.alvarez@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "efficiency",
+        "eks"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "EKS",
+        "EC2"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "efficiency",
+      "estimated_monthly_impact_usd": -8800,
+      "created_at": "2026-01-11",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-114",
+      "title": "Remove orphaned Elastic IPs (43 unattached)",
+      "description": "Remove orphaned Elastic IPs (43 unattached). Cost Explorer flags 43 unattached EIPs at $3.60/month each. Validate against asset DB, then release.",
+      "description_raw": "Cost Explorer flags 43 unattached EIPs at $3.60/month each. Validate against asset DB, then release.",
+      "type": "Task",
+      "status": "Done",
+      "priority": "Low",
+      "story_points": 1,
+      "assignee": "r.patel@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "cleanup"
+      ],
+      "components": [
+        "networking"
+      ],
+      "aws_services": [
+        "EC2"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cleanup",
+      "estimated_monthly_impact_usd": -160,
+      "created_at": "2026-01-09",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-115",
+      "title": "Snapshot lifecycle: expire EBS snapshots older than 90 days",
+      "description": "Snapshot lifecycle: expire EBS snapshots older than 90 days. We retain 11 months of EBS snapshots by default. DLM policy: expire daily snapshots after 14 days, weekly after 90 days.",
+      "description_raw": "We retain 11 months of EBS snapshots by default. DLM policy: expire daily snapshots after 14 days, weekly after 90 days.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Low",
+      "story_points": 2,
+      "assignee": "n.oduya@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "cleanup",
+        "ebs"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "EBS",
+        "DLM"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cleanup",
+      "estimated_monthly_impact_usd": -1900,
+      "created_at": "2026-01-11",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-116",
+      "title": "Deploy Cost Anomaly Detection alerts to Slack #finops",
+      "description": "Deploy Cost Anomaly Detection alerts to Slack #finops. Wire AWS Cost Anomaly Detection alerts into Slack #finops with daily digest. Includes per-service threshold of $500/day deviation.",
+      "description_raw": "Wire AWS Cost Anomaly Detection alerts into Slack #finops with daily digest. Includes per-service threshold of $500/day deviation.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 3,
+      "assignee": "k.menon@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "observability"
+      ],
+      "components": [
+        "observability"
+      ],
+      "aws_services": [
+        "Cost Explorer",
+        "SNS"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cost_optimization",
+      "estimated_monthly_impact_usd": 50,
+      "created_at": "2026-01-11",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-117",
+      "title": "Migrate dev databases from RDS to Aurora Serverless v2",
+      "description": "Migrate dev databases from RDS to Aurora Serverless v2. Dev RDS instances cost ~$2,800/month combined and idle 70 percent of the time. Move to Aurora Serverless v2 (min 0.5 ACU).",
+      "description_raw": "Dev RDS instances cost ~$2,800/month combined and idle 70 percent of the time. Move to Aurora Serverless v2 (min 0.5 ACU).",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 8,
+      "assignee": "s.huang@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "rightsizing",
+        "rds"
+      ],
+      "components": [
+        "data-platform"
+      ],
+      "aws_services": [
+        "RDS",
+        "Aurora Serverless v2"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "rightsizing",
+      "estimated_monthly_impact_usd": -1900,
+      "created_at": "2026-01-11",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-118",
+      "title": "Patch CVE-2025-9911 in customer-portal base image",
+      "description": "Patch CVE-2025-9911 in customer-portal base image. Critical CVE in OpenSSL base image. Bump to patched image and redeploy customer-portal. Tier-1 service; coordinate with on-call.",
+      "description_raw": "Critical CVE in OpenSSL base image. Bump to patched image and redeploy customer-portal. Tier-1 service; coordinate with on-call.",
+      "type": "Bug",
+      "status": "In Progress",
+      "priority": "Highest",
+      "story_points": 3,
+      "assignee": "a.kim@example.com",
+      "reporter": "secops@example.com",
+      "labels": [
+        "security",
+        "cve",
+        "must-do"
+      ],
+      "components": [
+        "customer-portal"
+      ],
+      "aws_services": [
+        "ECR",
+        "EKS"
+      ],
+      "epic_link": "SEC-EPIC-2026-Q1",
+      "ground_truth_theme": "security",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-01-08",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-119",
+      "title": "Fix flaky checkout integration test on CI",
+      "description": "Fix flaky checkout integration test on CI. checkout_e2e_smoke flakes ~20 percent of the time on PR builds. Root-causes to a timing assumption around Stripe sandbox latency.",
+      "description_raw": "checkout_e2e_smoke flakes ~20 percent of the time on PR builds. Root-causes to a timing assumption around Stripe sandbox latency.",
+      "type": "Bug",
+      "status": "In Progress",
+      "priority": "Medium",
+      "story_points": 2,
+      "assignee": "a.kim@example.com",
+      "reporter": "j.alvarez@example.com",
+      "labels": [
+        "bug",
+        "ci"
+      ],
+      "components": [
+        "checkout"
+      ],
+      "aws_services": [],
+      "epic_link": null,
+      "ground_truth_theme": "bug_fixes",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-01-09",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-120",
+      "title": "Document FinOps tagging standard in engineering wiki",
+      "description": "Document FinOps tagging standard in engineering wiki. Single page covering cost-center, owner, env, service tags. Linked from onboarding doc.",
+      "description_raw": "Single page covering cost-center, owner, env, service tags. Linked from onboarding doc.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Low",
+      "story_points": 1,
+      "assignee": "k.menon@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "docs"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "efficiency",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-01-11",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-121",
+      "title": "Spike: evaluate AWS Compute Optimizer recommendations",
+      "description": "Spike: evaluate AWS Compute Optimizer recommendations. Pull current Compute Optimizer recommendations for EC2, EBS, Lambda. Estimate annualized savings if accepted.",
+      "description_raw": "Pull current Compute Optimizer recommendations for EC2, EBS, Lambda. Estimate annualized savings if accepted.",
+      "type": "Spike",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 3,
+      "assignee": "k.menon@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "spike"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "Compute Optimizer"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cost_optimization",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-01-11",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-122",
+      "title": "Patch on-call runbook: search-v1 decommission rollback",
+      "description": "Patch on-call runbook: search-v1 decommission rollback. Add rollback steps to runbook for FIN-109. If anyone still calls search-v1 endpoint after teardown, point them at search-v2 alias.",
+      "description_raw": "Add rollback steps to runbook for FIN-109. If anyone still calls search-v1 endpoint after teardown, point them at search-v2 alias.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Low",
+      "story_points": 1,
+      "assignee": "r.patel@example.com",
+      "reporter": "j.alvarez@example.com",
+      "labels": [
+        "docs",
+        "runbook"
+      ],
+      "components": [
+        "search"
+      ],
+      "aws_services": [],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "maintenance",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-01-12",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-123",
+      "title": "Bug: cost dashboard pulls stale CUR data on Mondays",
+      "description": "Bug: cost dashboard pulls stale CUR data on Mondays. FinOps cost dashboard widget shows last week's data on Mondays because CUR refresh job runs Sunday 23:50 UTC and frontend caches for 24h. Fix cache TTL.",
+      "description_raw": "FinOps cost dashboard widget shows last week's data on Mondays because CUR refresh job runs Sunday 23:50 UTC and frontend caches for 24h. Fix cache TTL.",
+      "type": "Bug",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 2,
+      "assignee": "n.oduya@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "bug",
+        "finops",
+        "observability"
+      ],
+      "components": [
+        "observability"
+      ],
+      "aws_services": [
+        "Cost Explorer",
+        "QuickSight"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "bug_fixes",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-01-12",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-124",
+      "title": "Enable IMDSv2 across remaining EC2 fleet (security)",
+      "description": "Enable IMDSv2 across remaining EC2 fleet (security). 247 EC2 instances still on IMDSv1. Roll out IMDSv2-only via launch template update; coordinate restart windows with service owners.",
+      "description_raw": "247 EC2 instances still on IMDSv1. Roll out IMDSv2-only via launch template update; coordinate restart windows with service owners.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 5,
+      "assignee": "a.kim@example.com",
+      "reporter": "secops@example.com",
+      "labels": [
+        "security",
+        "ec2"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "EC2"
+      ],
+      "epic_link": "SEC-EPIC-2026-Q1",
+      "ground_truth_theme": "security",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-01-09",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-125",
+      "title": "Rightsize Lambda memory for invoice-pdf-generator",
+      "description": "Rightsize Lambda memory for invoice-pdf-generator. Lambda Insights shows invoice-pdf-generator over-provisioned at 2048 MB; uses 380 MB p95. Drop to 768 MB and re-benchmark.",
+      "description_raw": "Lambda Insights shows invoice-pdf-generator over-provisioned at 2048 MB; uses 380 MB p95. Drop to 768 MB and re-benchmark.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Low",
+      "story_points": 2,
+      "assignee": "s.huang@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "rightsizing",
+        "lambda"
+      ],
+      "components": [
+        "billing"
+      ],
+      "aws_services": [
+        "Lambda"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "rightsizing",
+      "estimated_monthly_impact_usd": -640,
+      "created_at": "2026-01-12",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-126",
+      "title": "Improve cost allocation report: per-team breakdown",
+      "description": "Improve cost allocation report: per-team breakdown. Extend QuickSight cost dashboard with per-team breakdown using cost-center tag. Required by FinOps monthly review.",
+      "description_raw": "Extend QuickSight cost dashboard with per-team breakdown using cost-center tag. Required by FinOps monthly review.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 3,
+      "assignee": "n.oduya@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "observability"
+      ],
+      "components": [
+        "observability"
+      ],
+      "aws_services": [
+        "QuickSight"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "observability",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-01-12",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-127",
+      "title": "Replace cron-on-EC2 reporting jobs with EventBridge + Lambda",
+      "description": "Replace cron-on-EC2 reporting jobs with EventBridge + Lambda. Two t3.medium 'cron boxes' run nightly Python reports. Move to EventBridge schedules + Lambda; retire the EC2 instances.",
+      "description_raw": "Two t3.medium 'cron boxes' run nightly Python reports. Move to EventBridge schedules + Lambda; retire the EC2 instances.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Low",
+      "story_points": 5,
+      "assignee": "j.alvarez@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "cleanup",
+        "serverless"
+      ],
+      "components": [
+        "data-platform"
+      ],
+      "aws_services": [
+        "EC2",
+        "EventBridge",
+        "Lambda"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cleanup",
+      "estimated_monthly_impact_usd": -340,
+      "created_at": "2026-01-12",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-128",
+      "title": "Fix bug: monthly Savings Plan utilization email broken",
+      "description": "Fix bug: monthly Savings Plan utilization email broken. Lambda that emails monthly SP utilization report fails on >100 KB attachments. Switch to S3 presigned URL.",
+      "description_raw": "Lambda that emails monthly SP utilization report fails on >100 KB attachments. Switch to S3 presigned URL.",
+      "type": "Bug",
+      "status": "To Do",
+      "priority": "Low",
+      "story_points": 2,
+      "assignee": "n.oduya@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "bug",
+        "finops"
+      ],
+      "components": [
+        "observability"
+      ],
+      "aws_services": [
+        "Lambda",
+        "SES",
+        "S3"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "bug_fixes",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-01-12",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-129",
+      "title": "Add small Karpenter consolidation policy on platform-prod",
+      "description": "Add small Karpenter consolidation policy on platform-prod. Enable Karpenter consolidation = WhenUnderutilized on platform-prod (already on staging). Reduces idle nodes during off-peak.",
+      "description_raw": "Enable Karpenter consolidation = WhenUnderutilized on platform-prod (already on staging). Reduces idle nodes during off-peak.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 3,
+      "assignee": "j.alvarez@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "efficiency",
+        "eks"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "EKS",
+        "EC2"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "efficiency",
+      "estimated_monthly_impact_usd": -5200,
+      "created_at": "2026-01-12",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-130",
+      "title": "Add p99 latency SLO check to rightsizing rollout playbook",
+      "description": "Add p99 latency SLO check to rightsizing rollout playbook. Guardrail: every rightsizing PR must include before/after p99 latency from CloudWatch. Add CI check + reviewer template.",
+      "description_raw": "Guardrail: every rightsizing PR must include before/after p99 latency from CloudWatch. Add CI check + reviewer template.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 3,
+      "assignee": "j.alvarez@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "reliability",
+        "guardrail"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "CloudWatch"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "reliability",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-01-12",
+      "sprint_number": 1,
+      "sprint_name": "April 2026 - Cost Optimization Kickoff",
+      "sprint_start": "2026-04-06",
+      "sprint_end": "2026-04-17",
+      "month": 4,
+      "month_label": "April 2026"
+    },
+    {
+      "id": "FIN-201",
+      "title": "Continue Graviton migration: payments-prod canary at 50 percent",
+      "description": "Continue Graviton migration: payments-prod canary at 50 percent. Follow-on to FIN-110. Move payments-prod canary from 5 to 50 percent on m7g.large. Validate p99 stays under 180 ms.",
+      "description_raw": "Follow-on to FIN-110. Move payments-prod canary from 5 to 50 percent on m7g.large. Validate p99 stays under 180 ms.",
+      "type": "Story",
+      "status": "In Progress",
+      "priority": "High",
+      "story_points": 5,
+      "assignee": "j.alvarez@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "graviton",
+        "rightsizing"
+      ],
+      "components": [
+        "payments"
+      ],
+      "aws_services": [
+        "EC2",
+        "EKS"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "rightsizing",
+      "estimated_monthly_impact_usd": -8400,
+      "created_at": "2026-01-22",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-202",
+      "title": "Buy 3-year RI for stable RDS Aurora workloads",
+      "description": "Buy 3-year RI for stable RDS Aurora workloads. Three Aurora clusters have 12+ months of stable utilization. Purchase 3-year, no-upfront RIs. Reviewed with finance.",
+      "description_raw": "Three Aurora clusters have 12+ months of stable utilization. Purchase 3-year, no-upfront RIs. Reviewed with finance.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 3,
+      "assignee": "k.menon@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "ri",
+        "rds"
+      ],
+      "components": [
+        "data-platform"
+      ],
+      "aws_services": [
+        "RDS Aurora"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cost_optimization",
+      "estimated_monthly_impact_usd": -18000,
+      "created_at": "2026-01-22",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-203",
+      "title": "Decommission staging-eks-blue (replaced by green)",
+      "description": "Decommission staging-eks-blue (replaced by green). staging-eks-blue is replaced by staging-eks-green for two months. Drain remaining test workloads, snapshot persistent volumes, tear down.",
+      "description_raw": "staging-eks-blue is replaced by staging-eks-green for two months. Drain remaining test workloads, snapshot persistent volumes, tear down.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 3,
+      "assignee": "r.patel@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "cleanup",
+        "eks"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "EKS"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cleanup",
+      "estimated_monthly_impact_usd": -3200,
+      "created_at": "2026-01-22",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-204",
+      "title": "S3 Intelligent-Tiering for analytics bucket",
+      "description": "S3 Intelligent-Tiering for analytics bucket. s3://corp-analytics-prod (28 TB) has unpredictable access. Move to Intelligent-Tiering with deep archive enabled.",
+      "description_raw": "s3://corp-analytics-prod (28 TB) has unpredictable access. Move to Intelligent-Tiering with deep archive enabled.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 3,
+      "assignee": "n.oduya@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "s3",
+        "efficiency"
+      ],
+      "components": [
+        "data-platform"
+      ],
+      "aws_services": [
+        "S3"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "efficiency",
+      "estimated_monthly_impact_usd": -2700,
+      "created_at": "2026-01-22",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-205",
+      "title": "Lambda rightsize for image-resize service (drop 1024 -> 512)",
+      "description": "Lambda rightsize for image-resize service (drop 1024 -> 512). image-resize p95 RAM 220 MB on 1024 MB. Drop to 512 MB.",
+      "description_raw": "image-resize p95 RAM 220 MB on 1024 MB. Drop to 512 MB.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Low",
+      "story_points": 1,
+      "assignee": "s.huang@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "rightsizing",
+        "lambda"
+      ],
+      "components": [
+        "media"
+      ],
+      "aws_services": [
+        "Lambda"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "rightsizing",
+      "estimated_monthly_impact_usd": -480,
+      "created_at": "2026-01-22",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-206",
+      "title": "Adopt VPC Gateway Endpoints for S3 / DynamoDB to cut NAT egress",
+      "description": "Adopt VPC Gateway Endpoints for S3 / DynamoDB to cut NAT egress. NAT Gateway data processing charges driven heavily by S3/DynamoDB traffic. Add Gateway Endpoints in 9 VPCs.",
+      "description_raw": "NAT Gateway data processing charges driven heavily by S3/DynamoDB traffic. Add Gateway Endpoints in 9 VPCs.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 5,
+      "assignee": "s.huang@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "networking",
+        "efficiency"
+      ],
+      "components": [
+        "networking"
+      ],
+      "aws_services": [
+        "VPC",
+        "S3",
+        "DynamoDB"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "efficiency",
+      "estimated_monthly_impact_usd": -6900,
+      "created_at": "2026-01-22",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-207",
+      "title": "Decommission idle Redshift cluster analytics-archive",
+      "description": "Decommission idle Redshift cluster analytics-archive. analytics-archive has been pause-eligible for 60 days. Final export to S3 Parquet, then delete.",
+      "description_raw": "analytics-archive has been pause-eligible for 60 days. Final export to S3 Parquet, then delete.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 3,
+      "assignee": "r.patel@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "cleanup",
+        "redshift"
+      ],
+      "components": [
+        "data-platform"
+      ],
+      "aws_services": [
+        "Redshift",
+        "S3"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cleanup",
+      "estimated_monthly_impact_usd": -7400,
+      "created_at": "2026-01-22",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-208",
+      "title": "Scale EKS payments-prod node group +40 percent for promo event",
+      "description": "Scale EKS payments-prod node group +40 percent for promo event. Marketing promo event 14 Feb expected 4x baseline traffic. Scale payments-prod node group from 50 to 70 m5.4xlarge.",
+      "description_raw": "Marketing promo event 14 Feb expected 4x baseline traffic. Scale payments-prod node group from 50 to 70 m5.4xlarge.",
+      "type": "Story",
+      "status": "In Progress",
+      "priority": "High",
+      "story_points": 5,
+      "assignee": "j.alvarez@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "scaling",
+        "capacity",
+        "eks"
+      ],
+      "components": [
+        "payments"
+      ],
+      "aws_services": [
+        "EKS",
+        "EC2"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "infrastructure_scaling",
+      "estimated_monthly_impact_usd": 28000,
+      "created_at": "2026-01-23",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-209",
+      "title": "Add 2 Aurora read replicas for checkout-prod",
+      "description": "Add 2 Aurora read replicas for checkout-prod. Pre-emptive capacity for promo event. Add two r6g.2xlarge readers to checkout-prod cluster.",
+      "description_raw": "Pre-emptive capacity for promo event. Add two r6g.2xlarge readers to checkout-prod cluster.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 3,
+      "assignee": "s.huang@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "scaling",
+        "capacity",
+        "aurora"
+      ],
+      "components": [
+        "checkout"
+      ],
+      "aws_services": [
+        "RDS Aurora"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "infrastructure_scaling",
+      "estimated_monthly_impact_usd": 9600,
+      "created_at": "2026-01-23",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-210",
+      "title": "Add 4 Kafka brokers to events-prod cluster (capacity)",
+      "description": "Add 4 Kafka brokers to events-prod cluster (capacity). events-prod cluster MSK at 78 percent of broker CPU during peak. Add 4 brokers (m5.large) and rebalance partitions.",
+      "description_raw": "events-prod cluster MSK at 78 percent of broker CPU during peak. Add 4 brokers (m5.large) and rebalance partitions.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 8,
+      "assignee": "j.alvarez@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "scaling",
+        "kafka",
+        "capacity"
+      ],
+      "components": [
+        "events"
+      ],
+      "aws_services": [
+        "MSK"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "infrastructure_scaling",
+      "estimated_monthly_impact_usd": 7200,
+      "created_at": "2026-01-23",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-211",
+      "title": "New feature: BNPL checkout option (Klarna)",
+      "description": "New feature: BNPL checkout option (Klarna). Add Klarna BNPL flow to checkout. Includes new Lambda for tokenization, DynamoDB table, Step Functions state machine.",
+      "description_raw": "Add Klarna BNPL flow to checkout. Includes new Lambda for tokenization, DynamoDB table, Step Functions state machine.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 13,
+      "assignee": "p.lopez@example.com",
+      "reporter": "product@example.com",
+      "labels": [
+        "feature",
+        "checkout"
+      ],
+      "components": [
+        "checkout"
+      ],
+      "aws_services": [
+        "Lambda",
+        "DynamoDB",
+        "Step Functions"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "feature_development",
+      "estimated_monthly_impact_usd": 1800,
+      "created_at": "2026-01-23",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-212",
+      "title": "New feature: gift cards (engineering work)",
+      "description": "New feature: gift cards (engineering work). Net-new gift cards module: API, DynamoDB table, fulfillment workflow.",
+      "description_raw": "Net-new gift cards module: API, DynamoDB table, fulfillment workflow.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 13,
+      "assignee": "p.lopez@example.com",
+      "reporter": "product@example.com",
+      "labels": [
+        "feature",
+        "checkout"
+      ],
+      "components": [
+        "checkout"
+      ],
+      "aws_services": [
+        "Lambda",
+        "DynamoDB",
+        "API Gateway"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "feature_development",
+      "estimated_monthly_impact_usd": 2100,
+      "created_at": "2026-01-23",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-213",
+      "title": "Expand search to include EU region (Frankfurt)",
+      "description": "Expand search to include EU region (Frankfurt). Stand up OpenSearch + ingestion pipeline in eu-central-1 for EU users.",
+      "description_raw": "Stand up OpenSearch + ingestion pipeline in eu-central-1 for EU users.",
+      "type": "Epic",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 13,
+      "assignee": "r.patel@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "expansion",
+        "geo",
+        "search"
+      ],
+      "components": [
+        "search"
+      ],
+      "aws_services": [
+        "OpenSearch",
+        "Kinesis"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "expansion",
+      "estimated_monthly_impact_usd": 22000,
+      "created_at": "2026-01-23",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-214",
+      "title": "Pre-warm ElastiCache nodes ahead of promo",
+      "description": "Pre-warm ElastiCache nodes ahead of promo. Add 2 cache.r6g.xlarge nodes to prod ElastiCache for promo. Will scale back after.",
+      "description_raw": "Add 2 cache.r6g.xlarge nodes to prod ElastiCache for promo. Will scale back after.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 3,
+      "assignee": "s.huang@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "scaling",
+        "capacity",
+        "cache"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "ElastiCache"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "infrastructure_scaling",
+      "estimated_monthly_impact_usd": 1700,
+      "created_at": "2026-01-23",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-215",
+      "title": "Add per-tenant quota service (new microservice)",
+      "description": "Add per-tenant quota service (new microservice). Net-new quota microservice (Go, EKS, DynamoDB) to enforce per-tenant rate limits.",
+      "description_raw": "Net-new quota microservice (Go, EKS, DynamoDB) to enforce per-tenant rate limits.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 13,
+      "assignee": "p.lopez@example.com",
+      "reporter": "product@example.com",
+      "labels": [
+        "feature",
+        "platform"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "EKS",
+        "DynamoDB"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "feature_development",
+      "estimated_monthly_impact_usd": 1400,
+      "created_at": "2026-01-23",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-216",
+      "title": "Cleanup: delete dev S3 buckets older than 180 days",
+      "description": "Cleanup: delete dev S3 buckets older than 180 days. 47 dev S3 buckets last modified >180 days ago, ~6 TB total. Two-step deletion (lifecycle policy + final delete) with owner notification.",
+      "description_raw": "47 dev S3 buckets last modified >180 days ago, ~6 TB total. Two-step deletion (lifecycle policy + final delete) with owner notification.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Low",
+      "story_points": 3,
+      "assignee": "n.oduya@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "cleanup",
+        "s3"
+      ],
+      "components": [
+        "data-platform"
+      ],
+      "aws_services": [
+        "S3"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cleanup",
+      "estimated_monthly_impact_usd": -1300,
+      "created_at": "2026-01-24",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-217",
+      "title": "Migrate logging from CloudWatch Logs to S3 + Athena",
+      "description": "Migrate logging from CloudWatch Logs to S3 + Athena. CloudWatch Logs ingest dominant cost line. Move structured app logs to S3 (Firehose) and query via Athena.",
+      "description_raw": "CloudWatch Logs ingest dominant cost line. Move structured app logs to S3 (Firehose) and query via Athena.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 8,
+      "assignee": "n.oduya@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "efficiency",
+        "observability"
+      ],
+      "components": [
+        "observability"
+      ],
+      "aws_services": [
+        "CloudWatch",
+        "S3",
+        "Firehose",
+        "Athena"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cost_optimization",
+      "estimated_monthly_impact_usd": -11000,
+      "created_at": "2026-01-24",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-218",
+      "title": "Bug: Karpenter not scaling down ARM nodes after Graviton rollout",
+      "description": "Bug: Karpenter not scaling down ARM nodes after Graviton rollout. After FIN-110 rollout, Karpenter consolidation does not pack ARM nodes correctly. Tune nodepool weights.",
+      "description_raw": "After FIN-110 rollout, Karpenter consolidation does not pack ARM nodes correctly. Tune nodepool weights.",
+      "type": "Bug",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 3,
+      "assignee": "j.alvarez@example.com",
+      "reporter": "j.alvarez@example.com",
+      "labels": [
+        "bug",
+        "eks",
+        "finops"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "EKS",
+        "EC2"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "bug_fixes",
+      "estimated_monthly_impact_usd": -2200,
+      "created_at": "2026-01-24",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-219",
+      "title": "Increase ALB capacity units for promo traffic",
+      "description": "Increase ALB capacity units for promo traffic. Pre-provision LCUs on payments + checkout ALBs to absorb 4x burst.",
+      "description_raw": "Pre-provision LCUs on payments + checkout ALBs to absorb 4x burst.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 2,
+      "assignee": "j.alvarez@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "scaling",
+        "capacity",
+        "alb"
+      ],
+      "components": [
+        "networking"
+      ],
+      "aws_services": [
+        "ALB",
+        "ELB"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "infrastructure_scaling",
+      "estimated_monthly_impact_usd": 1100,
+      "created_at": "2026-01-24",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-220",
+      "title": "Patch CVE-2026-1023 in nginx sidecar",
+      "description": "Patch CVE-2026-1023 in nginx sidecar. Critical CVE in nginx sidecar; rebuild base image and roll the fleet.",
+      "description_raw": "Critical CVE in nginx sidecar; rebuild base image and roll the fleet.",
+      "type": "Bug",
+      "status": "In Progress",
+      "priority": "Highest",
+      "story_points": 3,
+      "assignee": "a.kim@example.com",
+      "reporter": "secops@example.com",
+      "labels": [
+        "security",
+        "cve"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "ECR",
+        "EKS"
+      ],
+      "epic_link": "SEC-EPIC-2026-Q1",
+      "ground_truth_theme": "security",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-01-21",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-221",
+      "title": "Reliability: add multi-AZ failover drill for payments",
+      "description": "Reliability: add multi-AZ failover drill for payments. Run game day for payments-prod multi-AZ failover; document recovery time.",
+      "description_raw": "Run game day for payments-prod multi-AZ failover; document recovery time.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 5,
+      "assignee": "a.kim@example.com",
+      "reporter": "j.alvarez@example.com",
+      "labels": [
+        "reliability",
+        "gameday"
+      ],
+      "components": [
+        "payments"
+      ],
+      "aws_services": [
+        "EC2",
+        "RDS"
+      ],
+      "epic_link": null,
+      "ground_truth_theme": "reliability",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-01-24",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-222",
+      "title": "Bug: cost dashboard shows EU-region as us-east-1",
+      "description": "Bug: cost dashboard shows EU-region as us-east-1. Region label mapping bug after FIN-126. Fix mapping table.",
+      "description_raw": "Region label mapping bug after FIN-126. Fix mapping table.",
+      "type": "Bug",
+      "status": "To Do",
+      "priority": "Low",
+      "story_points": 1,
+      "assignee": "n.oduya@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "bug",
+        "observability",
+        "finops"
+      ],
+      "components": [
+        "observability"
+      ],
+      "aws_services": [
+        "QuickSight"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "bug_fixes",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-01-24",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-223",
+      "title": "Spike: pricing model for new EU expansion",
+      "description": "Spike: pricing model for new EU expansion. Build a sizing+pricing model for EU expansion (FIN-213). Compare 2-AZ vs 3-AZ, OpenSearch vs Aurora ES.",
+      "description_raw": "Build a sizing+pricing model for EU expansion (FIN-213). Compare 2-AZ vs 3-AZ, OpenSearch vs Aurora ES.",
+      "type": "Spike",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 3,
+      "assignee": "k.menon@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "expansion",
+        "spike"
+      ],
+      "components": [
+        "search"
+      ],
+      "aws_services": [
+        "OpenSearch",
+        "RDS Aurora"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "expansion",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-01-24",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-224",
+      "title": "Maintenance: upgrade EKS control plane to 1.30",
+      "description": "Maintenance: upgrade EKS control plane to 1.30. Routine EKS minor upgrade across 6 clusters.",
+      "description_raw": "Routine EKS minor upgrade across 6 clusters.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 5,
+      "assignee": "j.alvarez@example.com",
+      "reporter": "j.alvarez@example.com",
+      "labels": [
+        "maintenance",
+        "eks"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "EKS"
+      ],
+      "epic_link": null,
+      "ground_truth_theme": "maintenance",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-01-25",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-225",
+      "title": "Observability: Karpenter consolidation events to Datadog",
+      "description": "Observability: Karpenter consolidation events to Datadog. Surface Karpenter consolidation events as Datadog metrics so we can watch the FinOps impact in real time.",
+      "description_raw": "Surface Karpenter consolidation events as Datadog metrics so we can watch the FinOps impact in real time.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Low",
+      "story_points": 3,
+      "assignee": "n.oduya@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "observability",
+        "finops"
+      ],
+      "components": [
+        "observability"
+      ],
+      "aws_services": [
+        "EKS",
+        "CloudWatch"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "observability",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-01-25",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-226",
+      "title": "Increase DynamoDB provisioned capacity on orders-prod",
+      "description": "Increase DynamoDB provisioned capacity on orders-prod. Bump provisioned WCU on orders-prod from 1500 to 2400 ahead of promo. Will revisit after.",
+      "description_raw": "Bump provisioned WCU on orders-prod from 1500 to 2400 ahead of promo. Will revisit after.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 2,
+      "assignee": "s.huang@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "scaling",
+        "capacity",
+        "dynamodb"
+      ],
+      "components": [
+        "orders"
+      ],
+      "aws_services": [
+        "DynamoDB"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "infrastructure_scaling",
+      "estimated_monthly_impact_usd": 4200,
+      "created_at": "2026-01-25",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-227",
+      "title": "Cleanup: legacy ECS service order-router-v1",
+      "description": "Cleanup: legacy ECS service order-router-v1. order-router-v1 fully replaced by v2 last sprint. Tear down ECS service, ALB target group, ECR images.",
+      "description_raw": "order-router-v1 fully replaced by v2 last sprint. Tear down ECS service, ALB target group, ECR images.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 3,
+      "assignee": "r.patel@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "cleanup",
+        "ecs"
+      ],
+      "components": [
+        "orders"
+      ],
+      "aws_services": [
+        "ECS",
+        "ALB",
+        "ECR"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cleanup",
+      "estimated_monthly_impact_usd": -2600,
+      "created_at": "2026-01-25",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-228",
+      "title": "Add WAF rate-limit rules ahead of promo",
+      "description": "Add WAF rate-limit rules ahead of promo. Tighten WAF rate-limit per-IP and per-tenant in anticipation of promo abuse.",
+      "description_raw": "Tighten WAF rate-limit per-IP and per-tenant in anticipation of promo abuse.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 3,
+      "assignee": "a.kim@example.com",
+      "reporter": "secops@example.com",
+      "labels": [
+        "security",
+        "waf"
+      ],
+      "components": [
+        "edge"
+      ],
+      "aws_services": [
+        "WAF",
+        "CloudFront"
+      ],
+      "epic_link": "SEC-EPIC-2026-Q1",
+      "ground_truth_theme": "security",
+      "estimated_monthly_impact_usd": 50,
+      "created_at": "2026-01-25",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-229",
+      "title": "Reliability: increase RDS backup window for checkout",
+      "description": "Reliability: increase RDS backup window for checkout. Move checkout-prod backup window outside peak; lengthen retention to 14 days.",
+      "description_raw": "Move checkout-prod backup window outside peak; lengthen retention to 14 days.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 2,
+      "assignee": "s.huang@example.com",
+      "reporter": "j.alvarez@example.com",
+      "labels": [
+        "reliability",
+        "rds"
+      ],
+      "components": [
+        "checkout"
+      ],
+      "aws_services": [
+        "RDS"
+      ],
+      "epic_link": null,
+      "ground_truth_theme": "reliability",
+      "estimated_monthly_impact_usd": 220,
+      "created_at": "2026-01-25",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-230",
+      "title": "Refactor: extract shared SDK for cost-tagging",
+      "description": "Refactor: extract shared SDK for cost-tagging. Extract tag-helper code (used by 14 services) into shared internal SDK to keep tagging consistent.",
+      "description_raw": "Extract tag-helper code (used by 14 services) into shared internal SDK to keep tagging consistent.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Low",
+      "story_points": 5,
+      "assignee": "n.oduya@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "refactor"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "efficiency",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-01-25",
+      "sprint_number": 2,
+      "sprint_name": "May 2026 - Mixed Capacity & Cost",
+      "sprint_start": "2026-05-04",
+      "sprint_end": "2026-05-15",
+      "month": 5,
+      "month_label": "May 2026"
+    },
+    {
+      "id": "FIN-301",
+      "title": "Scale EKS payments-prod node group +60 percent (post-promo retained)",
+      "description": "Scale EKS payments-prod node group +60 percent (post-promo retained). Marketing kept the promo CTA after the event. Lock in node group at 80 m5.4xlarge instead of scaling back.",
+      "description_raw": "Marketing kept the promo CTA after the event. Lock in node group at 80 m5.4xlarge instead of scaling back.",
+      "type": "Story",
+      "status": "In Progress",
+      "priority": "Highest",
+      "story_points": 5,
+      "assignee": "j.alvarez@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "scaling",
+        "capacity",
+        "eks"
+      ],
+      "components": [
+        "payments"
+      ],
+      "aws_services": [
+        "EKS",
+        "EC2"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "infrastructure_scaling",
+      "estimated_monthly_impact_usd": 41000,
+      "created_at": "2026-02-05",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-302",
+      "title": "Add 3 more Aurora read replicas for checkout-prod",
+      "description": "Add 3 more Aurora read replicas for checkout-prod. Sustained read load from new gift cards / BNPL flows. Add 3 r6g.4xlarge readers.",
+      "description_raw": "Sustained read load from new gift cards / BNPL flows. Add 3 r6g.4xlarge readers.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Highest",
+      "story_points": 5,
+      "assignee": "s.huang@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "scaling",
+        "capacity",
+        "aurora"
+      ],
+      "components": [
+        "checkout"
+      ],
+      "aws_services": [
+        "RDS Aurora"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "infrastructure_scaling",
+      "estimated_monthly_impact_usd": 14400,
+      "created_at": "2026-02-05",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-303",
+      "title": "Add 6 Kafka brokers to events-prod",
+      "description": "Add 6 Kafka brokers to events-prod. Sustain higher throughput for new analytics pipelines from gift cards + BNPL features.",
+      "description_raw": "Sustain higher throughput for new analytics pipelines from gift cards + BNPL features.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 8,
+      "assignee": "j.alvarez@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "scaling",
+        "kafka",
+        "capacity"
+      ],
+      "components": [
+        "events"
+      ],
+      "aws_services": [
+        "MSK"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "infrastructure_scaling",
+      "estimated_monthly_impact_usd": 11000,
+      "created_at": "2026-02-05",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-304",
+      "title": "Stand up new EKS cluster in eu-central-1",
+      "description": "Stand up new EKS cluster in eu-central-1. Bring up production EKS cluster eu-prod-eks for EU expansion.",
+      "description_raw": "Bring up production EKS cluster eu-prod-eks for EU expansion.",
+      "type": "Epic",
+      "status": "In Progress",
+      "priority": "Highest",
+      "story_points": 13,
+      "assignee": "j.alvarez@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "expansion",
+        "geo",
+        "eks"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "EKS",
+        "EC2"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "expansion",
+      "estimated_monthly_impact_usd": 38000,
+      "created_at": "2026-02-05",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-305",
+      "title": "Provision Aurora Global Database (us-east-1 -> eu-central-1)",
+      "description": "Provision Aurora Global Database (us-east-1 -> eu-central-1). Create Aurora Global Database for EU read replicas.",
+      "description_raw": "Create Aurora Global Database for EU read replicas.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Highest",
+      "story_points": 8,
+      "assignee": "s.huang@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "expansion",
+        "geo",
+        "aurora"
+      ],
+      "components": [
+        "data-platform"
+      ],
+      "aws_services": [
+        "RDS Aurora"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "expansion",
+      "estimated_monthly_impact_usd": 27000,
+      "created_at": "2026-02-05",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-306",
+      "title": "Deploy CloudFront EU edge presence",
+      "description": "Deploy CloudFront EU edge presence. Add EU edge locations and origin failover for eu-prod stack.",
+      "description_raw": "Add EU edge locations and origin failover for eu-prod stack.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 5,
+      "assignee": "n.oduya@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "expansion",
+        "geo",
+        "cdn"
+      ],
+      "components": [
+        "edge"
+      ],
+      "aws_services": [
+        "CloudFront"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "expansion",
+      "estimated_monthly_impact_usd": 6800,
+      "created_at": "2026-02-05",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-307",
+      "title": "Replicate S3 product-images bucket to eu-central-1",
+      "description": "Replicate S3 product-images bucket to eu-central-1. Cross-region replication for product-images bucket (12 TB) into eu-central-1.",
+      "description_raw": "Cross-region replication for product-images bucket (12 TB) into eu-central-1.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 5,
+      "assignee": "r.patel@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "expansion",
+        "geo",
+        "s3"
+      ],
+      "components": [
+        "media"
+      ],
+      "aws_services": [
+        "S3"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "expansion",
+      "estimated_monthly_impact_usd": 4400,
+      "created_at": "2026-02-05",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-308",
+      "title": "New feature: subscriptions module",
+      "description": "New feature: subscriptions module. Net-new recurring subscriptions module: API, billing scheduler, webhooks. Multiple new Lambdas + new DynamoDB tables.",
+      "description_raw": "Net-new recurring subscriptions module: API, billing scheduler, webhooks. Multiple new Lambdas + new DynamoDB tables.",
+      "type": "Epic",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 21,
+      "assignee": "p.lopez@example.com",
+      "reporter": "product@example.com",
+      "labels": [
+        "feature",
+        "billing"
+      ],
+      "components": [
+        "billing"
+      ],
+      "aws_services": [
+        "Lambda",
+        "DynamoDB",
+        "EventBridge"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "feature_development",
+      "estimated_monthly_impact_usd": 3200,
+      "created_at": "2026-02-05",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-309",
+      "title": "New feature: loyalty points engine",
+      "description": "New feature: loyalty points engine. Net-new loyalty points engine with rules DSL. New Lambdas + DynamoDB stream consumer.",
+      "description_raw": "Net-new loyalty points engine with rules DSL. New Lambdas + DynamoDB stream consumer.",
+      "type": "Epic",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 21,
+      "assignee": "p.lopez@example.com",
+      "reporter": "product@example.com",
+      "labels": [
+        "feature",
+        "loyalty"
+      ],
+      "components": [
+        "loyalty"
+      ],
+      "aws_services": [
+        "Lambda",
+        "DynamoDB",
+        "Kinesis"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "feature_development",
+      "estimated_monthly_impact_usd": 2700,
+      "created_at": "2026-02-05",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-310",
+      "title": "Increase ElastiCache cluster size from 4 to 8 nodes",
+      "description": "Increase ElastiCache cluster size from 4 to 8 nodes. Promo retention added sustained traffic. Permanently scale ElastiCache from 4 to 8 cache.r6g.xlarge nodes.",
+      "description_raw": "Promo retention added sustained traffic. Permanently scale ElastiCache from 4 to 8 cache.r6g.xlarge nodes.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 3,
+      "assignee": "s.huang@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "scaling",
+        "capacity",
+        "cache"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "ElastiCache"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "infrastructure_scaling",
+      "estimated_monthly_impact_usd": 6800,
+      "created_at": "2026-02-06",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-311",
+      "title": "Increase DynamoDB on-demand on orders-prod (post-promo retained)",
+      "description": "Increase DynamoDB on-demand on orders-prod (post-promo retained). Switch orders-prod to on-demand at sustained higher level after promo.",
+      "description_raw": "Switch orders-prod to on-demand at sustained higher level after promo.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 2,
+      "assignee": "s.huang@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "scaling",
+        "capacity",
+        "dynamodb"
+      ],
+      "components": [
+        "orders"
+      ],
+      "aws_services": [
+        "DynamoDB"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "infrastructure_scaling",
+      "estimated_monthly_impact_usd": 9200,
+      "created_at": "2026-02-06",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-312",
+      "title": "Pre-provision OpenSearch capacity for EU launch",
+      "description": "Pre-provision OpenSearch capacity for EU launch. Stand up 9-node OpenSearch cluster in eu-central-1 to back EU search.",
+      "description_raw": "Stand up 9-node OpenSearch cluster in eu-central-1 to back EU search.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 8,
+      "assignee": "r.patel@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "expansion",
+        "geo",
+        "opensearch"
+      ],
+      "components": [
+        "search"
+      ],
+      "aws_services": [
+        "OpenSearch"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "expansion",
+      "estimated_monthly_impact_usd": 18000,
+      "created_at": "2026-02-06",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-313",
+      "title": "Stand up Kinesis ingestion in eu-central-1",
+      "description": "Stand up Kinesis ingestion in eu-central-1. Provision Kinesis Data Streams in eu-central-1 for cross-region event mirroring.",
+      "description_raw": "Provision Kinesis Data Streams in eu-central-1 for cross-region event mirroring.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 5,
+      "assignee": "j.alvarez@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "expansion",
+        "geo",
+        "kinesis"
+      ],
+      "components": [
+        "events"
+      ],
+      "aws_services": [
+        "Kinesis"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "expansion",
+      "estimated_monthly_impact_usd": 5200,
+      "created_at": "2026-02-06",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-314",
+      "title": "Add 2 more brokers to logging Kafka cluster",
+      "description": "Add 2 more brokers to logging Kafka cluster. Logging cluster lag spiking; add 2 m5.large brokers.",
+      "description_raw": "Logging cluster lag spiking; add 2 m5.large brokers.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 3,
+      "assignee": "n.oduya@example.com",
+      "reporter": "j.alvarez@example.com",
+      "labels": [
+        "scaling",
+        "kafka",
+        "observability"
+      ],
+      "components": [
+        "observability"
+      ],
+      "aws_services": [
+        "MSK"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "infrastructure_scaling",
+      "estimated_monthly_impact_usd": 3600,
+      "created_at": "2026-02-06",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-315",
+      "title": "New feature: gift cards EU rollout",
+      "description": "New feature: gift cards EU rollout. Localize gift cards module for EU (currency, VAT, language).",
+      "description_raw": "Localize gift cards module for EU (currency, VAT, language).",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 8,
+      "assignee": "p.lopez@example.com",
+      "reporter": "product@example.com",
+      "labels": [
+        "feature",
+        "geo"
+      ],
+      "components": [
+        "checkout"
+      ],
+      "aws_services": [
+        "Lambda",
+        "DynamoDB"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "feature_development",
+      "estimated_monthly_impact_usd": 1800,
+      "created_at": "2026-02-06",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-316",
+      "title": "Pre-provision ALB capacity in eu-central-1",
+      "description": "Pre-provision ALB capacity in eu-central-1. Pre-warm ALBs in eu-central-1 ahead of EU go-live.",
+      "description_raw": "Pre-warm ALBs in eu-central-1 ahead of EU go-live.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 2,
+      "assignee": "n.oduya@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "expansion",
+        "geo",
+        "alb"
+      ],
+      "components": [
+        "networking"
+      ],
+      "aws_services": [
+        "ALB"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "expansion",
+      "estimated_monthly_impact_usd": 1400,
+      "created_at": "2026-02-07",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-317",
+      "title": "Maintenance: Aurora minor version upgrade across prod",
+      "description": "Maintenance: Aurora minor version upgrade across prod. Routine Aurora minor version upgrade. Required for support coverage.",
+      "description_raw": "Routine Aurora minor version upgrade. Required for support coverage.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 3,
+      "assignee": "s.huang@example.com",
+      "reporter": "j.alvarez@example.com",
+      "labels": [
+        "maintenance",
+        "rds"
+      ],
+      "components": [
+        "data-platform"
+      ],
+      "aws_services": [
+        "RDS Aurora"
+      ],
+      "epic_link": null,
+      "ground_truth_theme": "maintenance",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-02-07",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-318",
+      "title": "Patch CVE-2026-2210 in Java base image",
+      "description": "Patch CVE-2026-2210 in Java base image. Critical Spring CVE; rebuild Java base image and redeploy 18 services.",
+      "description_raw": "Critical Spring CVE; rebuild Java base image and redeploy 18 services.",
+      "type": "Bug",
+      "status": "In Progress",
+      "priority": "Highest",
+      "story_points": 5,
+      "assignee": "a.kim@example.com",
+      "reporter": "secops@example.com",
+      "labels": [
+        "security",
+        "cve"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "ECR",
+        "EKS"
+      ],
+      "epic_link": "SEC-EPIC-2026-Q1",
+      "ground_truth_theme": "security",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-02-04",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-319",
+      "title": "Reliability: gameday for EU failback to us-east-1",
+      "description": "Reliability: gameday for EU failback to us-east-1. Gameday for failing EU traffic back to us-east-1 if eu-central-1 degrades.",
+      "description_raw": "Gameday for failing EU traffic back to us-east-1 if eu-central-1 degrades.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 5,
+      "assignee": "a.kim@example.com",
+      "reporter": "j.alvarez@example.com",
+      "labels": [
+        "reliability",
+        "gameday",
+        "geo"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "Route53",
+        "EKS"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "reliability",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-02-08",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-320",
+      "title": "Bug: Aurora Global writeback latency spikes during failover test",
+      "description": "Bug: Aurora Global writeback latency spikes during failover test. Investigate and fix writeback latency during multi-region failover.",
+      "description_raw": "Investigate and fix writeback latency during multi-region failover.",
+      "type": "Bug",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 5,
+      "assignee": "s.huang@example.com",
+      "reporter": "a.kim@example.com",
+      "labels": [
+        "bug",
+        "aurora"
+      ],
+      "components": [
+        "data-platform"
+      ],
+      "aws_services": [
+        "RDS Aurora"
+      ],
+      "epic_link": null,
+      "ground_truth_theme": "bug_fixes",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-02-08",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-321",
+      "title": "Observability: add EU dashboards to Datadog",
+      "description": "Observability: add EU dashboards to Datadog. Mirror existing US dashboards for the EU stack.",
+      "description_raw": "Mirror existing US dashboards for the EU stack.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 3,
+      "assignee": "n.oduya@example.com",
+      "reporter": "j.alvarez@example.com",
+      "labels": [
+        "observability",
+        "geo"
+      ],
+      "components": [
+        "observability"
+      ],
+      "aws_services": [
+        "CloudWatch"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "observability",
+      "estimated_monthly_impact_usd": 600,
+      "created_at": "2026-02-08",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-322",
+      "title": "Maintenance: rotate KMS keys per quarterly policy",
+      "description": "Maintenance: rotate KMS keys per quarterly policy. Quarterly KMS key rotation across prod accounts.",
+      "description_raw": "Quarterly KMS key rotation across prod accounts.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Low",
+      "story_points": 2,
+      "assignee": "a.kim@example.com",
+      "reporter": "secops@example.com",
+      "labels": [
+        "maintenance",
+        "security"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "KMS"
+      ],
+      "epic_link": null,
+      "ground_truth_theme": "maintenance",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-02-08",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-323",
+      "title": "Continue Graviton rollout (search-prod, 50 percent canary)",
+      "description": "Continue Graviton rollout (search-prod, 50 percent canary). Follow-on to FIN-110 / FIN-201. Roll search-prod to 50 percent Graviton.",
+      "description_raw": "Follow-on to FIN-110 / FIN-201. Roll search-prod to 50 percent Graviton.",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 5,
+      "assignee": "j.alvarez@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "rightsizing",
+        "graviton"
+      ],
+      "components": [
+        "search"
+      ],
+      "aws_services": [
+        "EC2",
+        "EKS"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "rightsizing",
+      "estimated_monthly_impact_usd": -6200,
+      "created_at": "2026-02-08",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-324",
+      "title": "Cleanup: old NAT Gateway in retired sandbox VPC",
+      "description": "Cleanup: old NAT Gateway in retired sandbox VPC. Sandbox VPC retired; NAT Gateway still alive. Remove.",
+      "description_raw": "Sandbox VPC retired; NAT Gateway still alive. Remove.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Low",
+      "story_points": 1,
+      "assignee": "r.patel@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "cleanup",
+        "networking"
+      ],
+      "components": [
+        "networking"
+      ],
+      "aws_services": [
+        "VPC",
+        "NAT Gateway"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cleanup",
+      "estimated_monthly_impact_usd": -150,
+      "created_at": "2026-02-08",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-325",
+      "title": "Apply S3 lifecycle to EU product-images bucket",
+      "description": "Apply S3 lifecycle to EU product-images bucket. Mirror US lifecycle policy to EU bucket so we don't repeat the mistake.",
+      "description_raw": "Mirror US lifecycle policy to EU bucket so we don't repeat the mistake.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Low",
+      "story_points": 2,
+      "assignee": "n.oduya@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "s3",
+        "efficiency",
+        "geo"
+      ],
+      "components": [
+        "media"
+      ],
+      "aws_services": [
+        "S3"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "efficiency",
+      "estimated_monthly_impact_usd": -800,
+      "created_at": "2026-02-08",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-326",
+      "title": "New feature: loyalty points UI in mobile app",
+      "description": "New feature: loyalty points UI in mobile app. Mobile UI for loyalty points (paired with FIN-309).",
+      "description_raw": "Mobile UI for loyalty points (paired with FIN-309).",
+      "type": "Story",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 8,
+      "assignee": "p.lopez@example.com",
+      "reporter": "product@example.com",
+      "labels": [
+        "feature",
+        "mobile"
+      ],
+      "components": [
+        "mobile"
+      ],
+      "aws_services": [
+        "AppSync",
+        "Cognito"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "feature_development",
+      "estimated_monthly_impact_usd": 900,
+      "created_at": "2026-02-08",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-327",
+      "title": "Increase Lambda concurrency limit on checkout-tokenize",
+      "description": "Increase Lambda concurrency limit on checkout-tokenize. Raise reserved concurrency from 200 to 600 for the new BNPL flow.",
+      "description_raw": "Raise reserved concurrency from 200 to 600 for the new BNPL flow.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "High",
+      "story_points": 1,
+      "assignee": "p.lopez@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "scaling",
+        "capacity",
+        "lambda"
+      ],
+      "components": [
+        "checkout"
+      ],
+      "aws_services": [
+        "Lambda"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "infrastructure_scaling",
+      "estimated_monthly_impact_usd": 1100,
+      "created_at": "2026-02-08",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-328",
+      "title": "Stand up dedicated bastion in eu-central-1",
+      "description": "Stand up dedicated bastion in eu-central-1. Bastion host + SSO for EU stack ops access.",
+      "description_raw": "Bastion host + SSO for EU stack ops access.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 2,
+      "assignee": "a.kim@example.com",
+      "reporter": "p.lopez@example.com",
+      "labels": [
+        "expansion",
+        "geo",
+        "security"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "EC2",
+        "SSO"
+      ],
+      "epic_link": "GROWTH-EPIC-2026-Q1",
+      "ground_truth_theme": "expansion",
+      "estimated_monthly_impact_usd": 280,
+      "created_at": "2026-02-09",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-329",
+      "title": "Bug: cost dashboard misclassifies eu-central-1 spend as 'untagged'",
+      "description": "Bug: cost dashboard misclassifies eu-central-1 spend as 'untagged'. EU resources lack the cost-center tag because the new region launch skipped the SCP. Fix tagging at provisioning.",
+      "description_raw": "EU resources lack the cost-center tag because the new region launch skipped the SCP. Fix tagging at provisioning.",
+      "type": "Bug",
+      "status": "To Do",
+      "priority": "Medium",
+      "story_points": 3,
+      "assignee": "n.oduya@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "bug",
+        "finops",
+        "geo"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "IAM",
+        "Cost Explorer"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "bug_fixes",
+      "estimated_monthly_impact_usd": 0,
+      "created_at": "2026-02-09",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    },
+    {
+      "id": "FIN-330",
+      "title": "Decommission old promo-prep capacity in non-prod",
+      "description": "Decommission old promo-prep capacity in non-prod. Tear down promo-prep oversize node groups in staging that were used for load tests.",
+      "description_raw": "Tear down promo-prep oversize node groups in staging that were used for load tests.",
+      "type": "Task",
+      "status": "To Do",
+      "priority": "Low",
+      "story_points": 2,
+      "assignee": "r.patel@example.com",
+      "reporter": "k.menon@example.com",
+      "labels": [
+        "finops",
+        "cleanup",
+        "eks"
+      ],
+      "components": [
+        "platform"
+      ],
+      "aws_services": [
+        "EKS",
+        "EC2"
+      ],
+      "epic_link": "FIN-EPIC-COST-25",
+      "ground_truth_theme": "cleanup",
+      "estimated_monthly_impact_usd": -2200,
+      "created_at": "2026-02-09",
+      "sprint_number": 3,
+      "sprint_name": "June 2026 - Promo Capacity & New Region",
+      "sprint_start": "2026-06-01",
+      "sprint_end": "2026-06-12",
+      "month": 6,
+      "month_label": "June 2026"
+    }
+  ]
+}

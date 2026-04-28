@@ -34,7 +34,12 @@ from truepath_ai.explainer import (
 # ---------------------------------------------------------------------------
 # Constants & palette
 # ---------------------------------------------------------------------------
-SAMPLE_PATH = Path(__file__).resolve().parent / "data" / "sample_project.json"
+DATA_DIR = Path(__file__).resolve().parent / "data"
+# Project to load on first launch. Falls back to the next available
+# `data/*.json` if this one is missing.
+DEFAULT_PROJECT_NAME = "full_project.json"
+# Backwards-compat alias - some helpers still reference SAMPLE_PATH.
+SAMPLE_PATH = DATA_DIR / DEFAULT_PROJECT_NAME
 
 C_TEAL      = "#2dd4bf"
 C_TEAL_DIM  = "#0d9488"
@@ -279,12 +284,49 @@ section[data-testid="stSidebar"] {{
 # Data helpers
 # ---------------------------------------------------------------------------
 @st.cache_data(show_spinner=False)
+def _bundled_projects() -> List[Path]:
+    """Discover bundled project JSONs in `data/`.
+
+    Sorted so that ``full_project.json`` and ``sample_project.json`` come
+    first (in that order); any other JSON dropped into `data/` is listed
+    afterwards alphabetically.
+    """
+    if not DATA_DIR.exists():
+        return []
+    priority = {"full_project.json": 0, "sample_project.json": 1}
+    return sorted(
+        DATA_DIR.glob("*.json"),
+        key=lambda p: (priority.get(p.name, 99), p.name),
+    )
+
+
+def _default_project_path() -> Optional[Path]:
+    """Pick the project to load on first launch."""
+    options = _bundled_projects()
+    if not options:
+        return None
+    preferred = next(
+        (p for p in options if p.name == DEFAULT_PROJECT_NAME), None
+    )
+    return preferred or options[0]
+
+
+@st.cache_data(show_spinner=False)
+def _load_bundled(path_str: str) -> dict:
+    """Load and normalize a bundled project JSON. Cached by path string."""
+    p = Path(path_str)
+    if not p.exists():
+        return {"title": "Untitled Project", "intent": "", "tasks": []}
+    with p.open("r", encoding="utf-8") as f:
+        return _coerce(json.load(f))
+
+
 def _load_sample() -> dict:
-    if not SAMPLE_PATH.exists():
+    """Backwards-compat shim - returns the default bundled project."""
+    default = _default_project_path()
+    if default is None:
         return {"title": "AWS Cloud Cost Optimization", "intent": "", "tasks": []}
-    with SAMPLE_PATH.open("r", encoding="utf-8") as f:
-        data = json.load(f)
-    return _coerce(data)
+    return _load_bundled(str(default))
 
 
 def _coerce(data: dict) -> dict:
@@ -301,16 +343,68 @@ def _coerce(data: dict) -> dict:
         if isinstance(t, str):
             tasks.append({"id": "", "description": t})
         elif isinstance(t, dict):
-            tasks.append({"id": str(t.get("id", "") or ""), "description": t.get("description", "") or ""})
+            tasks.append({
+                "id": str(t.get("id", "") or ""),
+                "description": t.get("description", "") or "",
+                # Preserve month / sprint context so the dashboard can
+                # filter by month and label tickets without re-loading.
+                "month": t.get("month"),
+                "month_label": t.get("month_label"),
+                "sprint_number": t.get("sprint_number"),
+                "sprint_name": t.get("sprint_name"),
+            })
     return {"title": data.get("title", "Untitled Project"), "intent": intent, "tasks": tasks}
+
+
+# ---------------------------------------------------------------------------
+# Month-filter helpers
+# ---------------------------------------------------------------------------
+ALL_MONTHS_LABEL = "All months"
+
+
+def _available_months(tasks: List[Dict]) -> List[str]:
+    """Return distinct month labels in chronological order.
+
+    Order is by ``month`` (1-12) when present, falling back to label
+    sort order. If no ticket has month metadata, returns an empty list
+    so the picker can be hidden.
+    """
+    seen: Dict[str, int] = {}
+    for t in tasks:
+        label = t.get("month_label")
+        if not label:
+            continue
+        order = t.get("month")
+        try:
+            order_int = int(order) if order is not None else 99
+        except (TypeError, ValueError):
+            order_int = 99
+        # Keep the smallest month order seen for each label.
+        if label not in seen or order_int < seen[label]:
+            seen[label] = order_int
+    return [label for label, _ in sorted(seen.items(), key=lambda kv: (kv[1], kv[0]))]
+
+
+def _filter_tasks_by_month(tasks: List[Dict], month_label: str) -> List[Dict]:
+    """Return only tickets whose `month_label` matches.
+
+    ``ALL_MONTHS_LABEL`` is a passthrough.
+    """
+    if not month_label or month_label == ALL_MONTHS_LABEL:
+        return tasks
+    return [t for t in tasks if t.get("month_label") == month_label]
 
 
 def _bootstrap():
     if "ready" in st.session_state:
         return
-    s = _load_sample()
+    default = _default_project_path()
+    s = _load_bundled(str(default)) if default else {
+        "title": "AWS Cloud Cost Optimization", "intent": "", "tasks": [],
+    }
     st.session_state.update(
         title=s["title"], intent=s["intent"], tasks=s["tasks"],
+        project_path=str(default) if default else "",
         aligned_min=0.70, drift_min=0.40, direction_threshold=0.35,
         ready=True,
     )
@@ -341,8 +435,8 @@ def _header(title: str):
         </div>
       </div>
       <div class="tp-hdr-pills">
-        <span class="tp-pill">Rule-based</span>
-        <span class="tp-pill">Zero ML</span>
+        <span class="tp-pill">AI-Powered</span>
+        <span class="tp-pill">Hybrid AI + Rules</span>
         <span class="tp-pill">Fully Auditable</span>
         <span class="tp-pill">Deterministic</span>
       </div>
@@ -363,15 +457,50 @@ def _sidebar():
                       font-size:18px; box-shadow:0 0 12px rgba(45,212,191,0.2);">&#x1F9ED;</div>
           <div>
             <div style="font-weight:700; font-size:0.95rem; color:{C_TEXT};">TruePath AI</div>
-            <div style="color:{C_MUTED}; font-size:0.70rem;">Intent Drift Detector v0.3</div>
+            <div style="color:{C_MUTED}; font-size:0.70rem;">Intent Drift Detector v0.4</div>
           </div>
         </div>""", unsafe_allow_html=True)
         st.divider()
 
         st.markdown(f'<div class="tp-sh">Data Source</div>', unsafe_allow_html=True)
-        src = st.radio("src", ("Bundled sample", "Upload JSON", "Paste JSON"),
+        src = st.radio("src", ("Bundled project", "Upload JSON", "Paste JSON"),
                        label_visibility="collapsed", key="source")
-        if src == "Upload JSON":
+        if src == "Bundled project":
+            options = _bundled_projects()
+            if not options:
+                st.caption("No bundled project files found in `data/`.")
+            else:
+                # Pretty label for each option includes a quick ticket count
+                # so reviewers can pick the demo size without opening files.
+                def _label(p: Path) -> str:
+                    try:
+                        with p.open("r", encoding="utf-8") as f:
+                            n = len(json.load(f).get("tasks", []) or [])
+                        return f"{p.stem}  ({n} tickets)"
+                    except Exception:
+                        return p.stem
+
+                current = st.session_state.get("project_path") or str(options[0])
+                try:
+                    default_idx = [str(p) for p in options].index(current)
+                except ValueError:
+                    default_idx = 0
+                choice = st.selectbox(
+                    "project_pick",
+                    options,
+                    index=default_idx,
+                    format_func=_label,
+                    label_visibility="collapsed",
+                )
+                if st.button("Load project", use_container_width=True):
+                    p = _load_bundled(str(choice))
+                    st.session_state.update(
+                        title=p["title"], intent=p["intent"],
+                        tasks=p["tasks"], project_path=str(choice),
+                    )
+                    st.toast(f"Loaded {choice.name}", icon="✅")
+                    st.rerun()
+        elif src == "Upload JSON":
             up = st.file_uploader("upload", type=["json"], label_visibility="collapsed")
             if up and st.button("Load file", use_container_width=True):
                 try:
@@ -407,8 +536,13 @@ def _sidebar():
 
         st.divider()
         if st.button("Reset to demo", use_container_width=True, type="secondary"):
-            s = _load_sample()
-            st.session_state.update(title=s["title"], intent=s["intent"], tasks=s["tasks"], source="Bundled sample")
+            default = _default_project_path()
+            s = _load_bundled(str(default)) if default else _load_sample()
+            st.session_state.update(
+                title=s["title"], intent=s["intent"], tasks=s["tasks"],
+                project_path=str(default) if default else "",
+                source="Bundled project",
+            )
             st.rerun()
 
 
@@ -566,7 +700,12 @@ def _tab_intent(intent_text: str, intent_themes: List[str]):
 # ---------------------------------------------------------------------------
 # Tab 2 - Tickets
 # ---------------------------------------------------------------------------
-def _tab_tickets(classification: dict, intent_themes: List[str]):
+def _tab_tickets(
+    classification: dict,
+    intent_themes: List[str],
+    filtered_tasks: List[Dict],
+    active_month: str,
+):
     intent_set = set(intent_themes)
     sem_on = classification.get("semantic_enabled", False)
 
@@ -578,9 +717,22 @@ def _tab_tickets(classification: dict, intent_themes: List[str]):
           </span>
         </div>""", unsafe_allow_html=True)
 
-    st.caption("Edit ID or Description to live-update the verdict. Add rows with **+**; delete with the checkbox.")
+    if active_month != ALL_MONTHS_LABEL:
+        st.caption(
+            f"Showing **{active_month}** tickets only ({len(filtered_tasks)} "
+            f"rows). Edits stay scoped to this month; tickets in the other "
+            f"months are preserved untouched. Switch the timeline filter to "
+            f"`All months` to see and edit the full backlog."
+        )
+    else:
+        st.caption(
+            "Edit ID or Description to live-update the verdict. Add rows "
+            "with **+**; delete with the checkbox."
+        )
 
-    ticket_rows = st.session_state.get("tasks", [])
+    # Only the active month's tickets feed the table; the classifier
+    # output is keyed by id/description so we map back to it from there.
+    ticket_rows = filtered_tasks
     classified = {}
     for t in classification["tasks"]:
         classified[t["id"]] = t
@@ -630,8 +782,53 @@ def _tab_tickets(classification: dict, intent_themes: List[str]):
         key="ticket_editor",
     )
 
-    new_tasks = [{"id": str(r.get("ID", "") or "").strip(),
-                  "description": str(r.get("Description", "") or "").strip()} for r in edited]
+    # Build an id-keyed lookup for the previously-displayed tickets so
+    # edits in the data_editor do NOT wipe their month / sprint
+    # metadata. Without this, every rerun would rebuild rows with only
+    # id+description and the timeline filter (which keys off
+    # month_label) would silently disappear after the first
+    # interaction.
+    prev_by_id = {
+        str(t.get("id") or ""): t
+        for t in filtered_tasks
+        if t.get("id")
+    }
+
+    edited_filtered: List[Dict] = []
+    for r in edited:
+        tid = str(r.get("ID", "") or "").strip()
+        desc = str(r.get("Description", "") or "").strip()
+        prev = prev_by_id.get(tid, {})
+        # When the user is filtered to a specific month, default any
+        # newly-added row to that month so it stays visible after the
+        # add (otherwise it would have month_label=None and instantly
+        # disappear from the filtered view).
+        default_month_label = (
+            active_month if active_month != ALL_MONTHS_LABEL else None
+        )
+        edited_filtered.append({
+            "id": tid,
+            "description": desc,
+            "month": prev.get("month"),
+            "month_label": prev.get("month_label") or default_month_label,
+            "sprint_number": prev.get("sprint_number"),
+            "sprint_name": prev.get("sprint_name"),
+        })
+
+    # Merge the edited slice back into the FULL session task list:
+    #   - "All months"  -> straight replace (the table covered everything).
+    #   - per-month     -> keep all other-month tickets as-is, swap in
+    #                      the edited rows for the active month.
+    if active_month == ALL_MONTHS_LABEL:
+        new_tasks = edited_filtered
+    else:
+        existing = st.session_state.get("tasks") or []
+        new_tasks = [
+            t for t in existing
+            if t.get("month_label") != active_month
+        ]
+        new_tasks.extend(edited_filtered)
+
     if new_tasks != st.session_state.get("tasks"):
         st.session_state["tasks"] = new_tasks
         st.rerun()
@@ -864,8 +1061,8 @@ def _tab_pipeline(classification: dict, verdict: dict, cost: bool):
       <div class="tp-sh">How TruePath AI Works</div>
       <div style="color:#cbd5e1; font-size:0.90rem; line-height:1.6;">
         <b>1. Intent Analysis</b> -- parses the project description into a primary goal,
-        supporting goals, constraints, and intent themes using keyword extraction and
-        goal-verb scoring. No ML.<br>
+        supporting goals, constraints, and intent themes using rule-based NLP
+        (sentence segmentation, goal-verb scoring, keyword extraction).<br>
         <b>2. Ticket Classification</b> -- each ticket is matched against a 12-theme
         lexicon ({len(THEME_LEXICON)} themes, {sum(len(v) for v in THEME_LEXICON.values())} keywords).
         When the semantic model is available, tickets with zero lexicon hits are rescued
@@ -974,10 +1171,50 @@ def main():
 
     title = st.session_state.get("title", "Untitled Project")
     intent_text = st.session_state.get("intent", "")
-    raw_tasks = st.session_state.get("tasks", [])
-    pipeline_tasks = _clean_tasks(raw_tasks)
+    all_raw_tasks = st.session_state.get("tasks", [])
 
     _header(title)
+
+    # ---- Month picker -----------------------------------------------------
+    # Only shown when the loaded data has month metadata. Reviewers can
+    # flip between "All months" / April / May / June and watch the
+    # verdict shift as the project drifts further from intent.
+    months = _available_months(all_raw_tasks)
+    if months:
+        options = [ALL_MONTHS_LABEL] + months
+        # Show counts inline so the picker doubles as a quick summary.
+        counts = {ALL_MONTHS_LABEL: len(all_raw_tasks)}
+        for m in months:
+            counts[m] = sum(1 for t in all_raw_tasks if t.get("month_label") == m)
+        current = st.session_state.get("month_filter", ALL_MONTHS_LABEL)
+        if current not in options:
+            current = ALL_MONTHS_LABEL
+        st.markdown(
+            '<div class="tp-sh" style="margin-bottom:0.35rem;">'
+            'Timeline filter</div>',
+            unsafe_allow_html=True,
+        )
+        picked = st.radio(
+            "month_filter_radio",
+            options,
+            index=options.index(current),
+            horizontal=True,
+            label_visibility="collapsed",
+            format_func=lambda m: f"{m}  ({counts.get(m, 0)})",
+            key="month_filter",
+        )
+    else:
+        picked = ALL_MONTHS_LABEL
+
+    raw_tasks = _filter_tasks_by_month(all_raw_tasks, picked)
+    pipeline_tasks = _clean_tasks(raw_tasks)
+
+    if picked != ALL_MONTHS_LABEL:
+        st.caption(
+            f"Showing **{picked}** only - {len(pipeline_tasks)} of "
+            f"{len(all_raw_tasks)} tickets. Verdict, KPIs, theme chart, "
+            f"and contributors below all reflect this month's slice."
+        )
 
     if not intent_text.strip():
         st.warning("Enter a project intent in the sidebar to begin analysis.")
@@ -1019,7 +1256,7 @@ def main():
     with tabs[0]:
         _tab_intent(intent_text, intent_themes)
     with tabs[1]:
-        _tab_tickets(classification, intent_themes)
+        _tab_tickets(classification, intent_themes, raw_tasks, picked)
     with tabs[2]:
         _tab_drift(verdict, classification, cost)
     with tabs[3]:
