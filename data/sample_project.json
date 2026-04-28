@@ -1,0 +1,43 @@
+{
+  "title": "AWS Cloud Cost Optimization",
+  "description": "Reduce AWS cloud cost by 25 percent over the next two quarters by rightsizing over-provisioned EC2 and RDS resources, adopting Savings Plans and Spot instances, and decommissioning idle services and unused storage.",
+  "goals": [
+    "Rightsize over-provisioned EC2, RDS, and EBS resources flagged by AWS Compute Optimizer",
+    "Adopt Savings Plans and Spot instances for steady-state and batch workloads",
+    "Decommission idle services and unattached resources that have had no activity for 30 days"
+  ],
+  "tasks": [
+    {
+      "id": "CLOUD-101",
+      "description": "Rightsize over-provisioned production EC2 instances flagged by AWS Compute Optimizer to reduce monthly compute spend."
+    },
+    {
+      "id": "CLOUD-102",
+      "description": "Apply Savings Plans across steady-state EC2 and Fargate usage to reduce on-demand spend."
+    },
+    {
+      "id": "CLOUD-103",
+      "description": "Decommission idle RDS databases that have had zero connections for 30+ days to eliminate unused spend."
+    },
+    {
+      "id": "CLOUD-104",
+      "description": "Delete unattached EBS volumes and unused Elastic IPs across dev accounts to clean up unused resources."
+    },
+    {
+      "id": "PLAT-201",
+      "description": "Scale up production EKS cluster from 20 to 40 nodes to add capacity for the Black Friday traffic launch."
+    },
+    {
+      "id": "PLAT-202",
+      "description": "Add 3 read replicas to the orders Aurora cluster to scale read throughput for the new analytics service."
+    },
+    {
+      "id": "PLAT-203",
+      "description": "Increase node group capacity for the payments microservice to add headroom for peak traffic."
+    },
+    {
+      "id": "PLAT-204",
+      "description": "Scale up Kafka broker shards to handle the new event-driven analytics pipeline."
+    }
+  ]
+}
