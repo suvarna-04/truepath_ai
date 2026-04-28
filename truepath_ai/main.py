@@ -24,6 +24,7 @@ try:
     # Preferred: run as a package, e.g. `python -m truepath_ai.main`
     from .explainer import explain_drift
     from .intent_analyzer import extract_intent_themes, parse_intent
+    from .semantic_classifier import get_default_classifier
     from .task_analyzer import classify_tasks
 except ImportError:
     # Fallback: run directly as `python main.py` from inside the
@@ -38,6 +39,7 @@ except ImportError:
         extract_intent_themes,
         parse_intent,
     )
+    from truepath_ai.semantic_classifier import get_default_classifier
     from truepath_ai.task_analyzer import classify_tasks
 
 
@@ -105,6 +107,40 @@ def _print_banner(project_title: str) -> None:
     print("Detect when tickets drift away from project intent".center(WIDTH))
     print(BAR)
     print(f"Project: {project_title}")
+    _print_ai_status()
+
+
+def _print_ai_status() -> None:
+    """Tell the user whether the embedding-based AI layer is active.
+
+    Loading the model is opt-in implicit (`classify_tasks` does it on
+    first use), so this preview surfaces the status up-front for the
+    demo. If the ML stack is not installed, we say so politely and
+    explain that the system has dropped to its rule-based fallback.
+
+    The `sentence-transformers` import-error warning emitted by the
+    classifier is intentionally suppressed here - we're about to print
+    the exact same information in a friendlier format.
+    """
+    import warnings as _warnings
+
+    classifier = get_default_classifier()
+    with _warnings.catch_warnings():
+        _warnings.simplefilter("ignore", RuntimeWarning)
+        is_online = classifier.is_available()
+
+    if is_online:
+        print(
+            f"AI layer    : ONLINE  (sentence-embedding theme "
+            f"classifier, model={classifier.model_name})"
+        )
+    else:
+        err = classifier.load_error() or "ML stack unavailable"
+        print(
+            "AI layer    : offline  (lexicon-only fallback - "
+            "install requirements.txt to enable the embedding layer)"
+        )
+        print(f"               reason: {err}")
 
 
 # ---------------------------------------------------------------------------
@@ -193,6 +229,17 @@ def _print_task_section(
             f"{theme_label}  ({evidence})"
         )
         print(f'      "{t["description"]}"')
+
+        # When the AI layer rescued this ticket from the lexicon's
+        # blind spot, surface the model's evidence so reviewers can
+        # see WHY the embedding model voted the way it did.
+        if t.get("classified_by") == "semantic":
+            score = t.get("semantic_top_score")
+            score_text = f"{score:.2f}" if score is not None else "n/a"
+            print(
+                f"      [AI] embedding model assigned theme "
+                f"'{t['top_theme']}' (cosine={score_text})"
+            )
 
 
 def _print_drift_section(

@@ -1,4 +1,10 @@
-# TruePath AI runs on the Python 3.9+ standard library only.
-# Add optional upgrades below if you want a richer similarity engine:
+# TruePath AI core runs on the Python 3.9+ standard library only.
+# These dependencies are only needed for the Streamlit dashboard (app.py).
+
+streamlit>=1.36
+plotly>=5.20
+
+# Optional upgrades if you want a richer similarity engine (not needed
+# for the demo or the UI):
 # scikit-learn>=1.3      # for TF-IDF based vectorization
 # sentence-transformers   # for semantic embeddings
