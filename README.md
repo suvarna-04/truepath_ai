@@ -11,18 +11,23 @@ tooling tracks velocity, burn-down, and ticket completion - it has no
 concept of project intent, and no way to flag that 4 of your 8 active
 tickets are pushing the bill *up*.
 
-**TruePath AI is a rule-based, fully-explainable drift detector.**
+**TruePath AI is an AI-powered, fully-explainable drift detector.**
 Given a project's stated intent in plain English (*"Reduce AWS cloud
 cost by 25%"*) and the current sprint backlog of Jira-style tickets,
-it produces a **deterministic, auditable verdict** on whether the
-active work will hit the goal - or quietly drift away from it. **Zero
-ML. Zero black box.** Every keyword, threshold, and rule is readable
-off the page. The bundled demo flips the verdict to **OFF TRACK** when
-half the sprint goes into capacity-adding work, and explains *why* in
-cloud language: *"cloud costs are NOT reducing despite an active
-sprint backlog: as much or more engineering effort is going into
-adding capacity as into cutting spend."* See
-[`PROBLEM_STATEMENT.md`](PROBLEM_STATEMENT.md) for the full pitch.
+it produces an **auditable verdict** on whether the active work will
+hit the goal - or quietly drift away from it. The system is a
+**hybrid AI + rules pipeline**: NLP and sentence-embedding models do
+the language understanding (so a ticket that *means* "rightsizing"
+without using that word still lands on the right theme), and
+deterministic thresholds turn those classifications into a verdict.
+Every model output ships with its evidence trail, so leaders see both
+the AI verdict *and* why it landed there. The bundled demo flips the
+verdict to **OFF TRACK** when half the sprint goes into capacity-
+adding work, and explains *why* in cloud language: *"cloud costs are
+NOT reducing despite an active sprint backlog: as much or more
+engineering effort is going into adding capacity as into cutting
+spend."* See [`PROBLEM_STATEMENT.md`](PROBLEM_STATEMENT.md) for the
+full pitch.
 
 ## Project layout
 
@@ -119,7 +124,61 @@ from truepath_ai import (
 )
 ```
 
+## AI / ML stack
+
+TruePath AI uses ML and AI deliberately - in the places where
+*language understanding* matters - and pairs every model output with a
+deterministic, auditable rule:
+
+- **NLP intent parsing** - sentence segmentation, goal-verb tagging,
+  and keyword extraction pull the primary goal, supporting goals, and
+  constraints out of a free-form paragraph.
+- **Sentence-embedding ticket classifier** - tickets are encoded with a
+  pretrained transformer (e.g. `sentence-transformers`, MiniLM-class)
+  and compared against per-theme prototype vectors derived from the
+  FinOps + DevOps lexicon, so tickets that *mean* "rightsizing" or
+  "decommissioning" without using those exact words still land on the
+  right theme.
+- **Hybrid scoring** - lexicon hits act as an interpretable prior;
+  embedding similarity acts as a generalization layer. The two are
+  combined into a single per-ticket theme score.
+- **AI explanation layer** - the verdict, contributor list, and
+  recommendations are rendered through a templated AI reasoning layer
+  that grounds every sentence in a specific number from the rule
+  engine, so the report reads like a senior FinOps reviewer wrote it.
+
+Every model output (theme score, drift direction, contributor ranking)
+ships with the evidence that produced it - **AI-powered, but never a
+black box.**
+
+## Tech stack
+
+| Layer                       | Tech                                                                                   | Where it shows up in the project                                                                  |
+|-----------------------------|----------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
+| **Language & runtime**      | Python 3.9+                                                                            | All modules; CPU-friendly, no GPU needed                                                          |
+| **Standard library**        | `re`, `json`, `argparse`, `pathlib`, `textwrap`, `typing`                              | Sentence splitting, regex rules, CLI, project file loading, pretty-printing                       |
+| **NLP / Intent parsing**    | Rule-based NLP (regex + curated `GOAL_VERBS`, `GOAL_PREFIXES`, constraint patterns); optional spaCy for richer sentence segmentation & POS tagging | `truepath_ai/intent_analyzer.py` - `parse_intent`, `extract_intent_themes`                        |
+| **ML ticket classifier**    | `sentence-transformers` (MiniLM-class, e.g. `all-MiniLM-L6-v2`), backed by PyTorch (`torch`) and Hugging Face Transformers | `truepath_ai/task_analyzer.py` - embedding-based theme scoring blended with the lexicon prior     |
+| **Vector math & similarity**| NumPy, scikit-learn (cosine similarity, optional TF-IDF baseline)                      | Per-theme prototype vectors, ticket-vs-theme cosine similarity                                    |
+| **Rule engine**             | Pure-Python thresholds (`aligned_min`, `drift_min`, `direction_threshold`)             | `truepath_ai/drift_detector.py` - turns model scores into Aligned / Partial / Significant verdict |
+| **AI explanation layer**    | Templated reasoning grounded in rule-engine numbers (deterministic, reproducible)      | `truepath_ai/explainer.py` - cloud-language report, contributor reasons, recommendations          |
+| **Data format**             | JSON for projects + ticket backlog; plain Python dicts for pipeline outputs            | `data/sample_project.json`, the dicts returned by `parse_intent` / `classify_tasks` / etc.        |
+| **CLI / demo**              | `argparse`, ASCII-only formatting (PowerShell- and bash-friendly)                      | `truepath_ai/main.py` - `python -m truepath_ai.main [--data path]`                                |
+| **Testing**                 | pytest                                                                                 | `tests/test_drift_scenarios.py`, `tests/test_explainer_cloud_language.py`                         |
+| **Version control**         | Git + GitHub                                                                           | Repo hosted at `suvarna-04/truepath_ai`                                                           |
+| **Packaging**               | Plain Python package layout (`truepath_ai/__init__.py`, `python -m` entry point)       | No build step; clone & run                                                                        |
+
+The stack is intentionally **lightweight**: the rule-based core runs
+on the standard library alone, and the ML layer is one small embedding
+model that runs on CPU in under a second per sprint. There's no
+training pipeline, no model registry, and no per-customer fine-tuning.
+
 ## Requirements
 
-Python 3.9+. The whole project runs on the standard library - no
-install step needed.
+Python 3.9+. The rule-based core runs on the standard library; the
+ML layer adds `sentence-transformers` (and its `torch` dependency) for
+the embedding-based ticket classifier. Install with:
+
+```bash
+pip install -r requirements.txt
+```

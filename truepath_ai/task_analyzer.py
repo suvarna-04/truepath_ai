@@ -11,19 +11,29 @@ Plain-English version (for judges):
             - eight general cloud / DevOps themes:
               scaling, observability, maintenance, expansion,
               security, ux, data, experimentation.
-      2. ranks the team's "dominant themes" by total keyword hits,
-      3. labels each task as "Aligned", "Neutral", or
+      2. (when the ML layer is available) for tickets whose lexicon
+         match is empty, falls back to a sentence-embedding classifier
+         that compares the ticket against per-theme prototype vectors
+         built from the same lexicon. This catches tickets that *mean*
+         "rightsizing" or "decommissioning" without using those exact
+         words.
+      3. ranks the team's "dominant themes" by total keyword hits,
+      4. labels each task as "Aligned", "Neutral", or
          "Potentially misaligned" based on how strongly it lands on
          a dominant theme.
 
-The lexicon below is the only source of truth - every verdict can be
-read off the page, no model weights involved.
+The lexicon is the auditable prior; the embedding model is a
+generalization layer that only fires when the lexicon would otherwise
+have produced no answer at all. Every per-task dict therefore carries
+both the matched keywords and (when the ML layer is on) the semantic
+score that produced the verdict, so the chain of evidence stays fully
+inspectable end-to-end.
 """
 
 from __future__ import annotations
 
 import re
-from typing import Dict, List, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 
 # ---------------------------------------------------------------------------
@@ -203,33 +213,72 @@ def _normalize(items: List[Union[str, dict]]) -> List[dict]:
 # Public classifier
 # ---------------------------------------------------------------------------
 
+def _resolve_semantic_classifier(
+    use_semantic: bool,
+    classifier: Optional[Any],
+) -> Optional[Any]:
+    """Return a usable semantic classifier, or None.
+
+    Kept as a tiny helper so the heavy import only fires when ML is
+    actually requested - the lexicon-only path stays free of any
+    `sentence-transformers` / `torch` cost.
+    """
+    if not use_semantic:
+        return None
+    if classifier is not None:
+        return classifier if getattr(classifier, "is_available", lambda: False)() else None
+    try:
+        from .semantic_classifier import get_default_classifier
+    except Exception:
+        return None
+    candidate = get_default_classifier()
+    return candidate if candidate.is_available() else None
+
+
 def classify_tasks(
     tasks: List[Union[str, dict]],
     *,
     top_themes: int = 3,
     aligned_threshold: int = 2,
+    use_semantic: bool = True,
+    semantic_threshold: float = 0.30,
+    semantic_classifier: Optional[Any] = None,
 ) -> Dict[str, object]:
     """Identify dominant themes in a backlog and label each task.
 
     Plain-English version of the rules:
 
-      1. Each task is scanned for theme keywords from THEME_LEXICON.
-      2. Hits are summed across the whole backlog. The top `top_themes`
+      1. Each task is scanned for theme keywords from THEME_LEXICON
+         (the lexicon prior).
+      2. If `use_semantic` is True and the embedding model is
+         available, every ticket is also scored by a sentence-
+         transformer against per-theme prototype vectors. The semantic
+         score is recorded on the ticket as evidence and is used as a
+         FALLBACK only - it picks a theme when the lexicon produced
+         no match at all. This keeps the rule-based contract intact
+         (a ticket that lights up the lexicon always wins by lexicon
+         hits) while still letting the ML layer rescue tickets phrased
+         in their own words.
+      3. Hits are summed across the whole backlog. The top `top_themes`
          themes by hit count are the *dominant themes*.
-      3. Each task is labelled:
+      4. Each task is labelled:
            "Aligned"               - top theme is dominant AND the task
                                      hit at least `aligned_threshold`
                                      keywords for that theme.
            "Neutral"               - hit at least one theme keyword, but
                                      the top theme is non-dominant or
                                      below the threshold.
-           "Potentially misaligned" - no theme keywords matched at all.
+           "Potentially misaligned" - no theme keywords matched at all
+                                      AND the embedding fallback was
+                                      below `semantic_threshold` (or
+                                      offline).
 
     Returns a dict shaped like::
 
         {
             "themes": [{"name": ..., "hits": ..., "tasks": [...]}, ...],
             "dominant_themes": ["optimization", "expansion", ...],
+            "semantic_enabled": True | False,
             "tasks": [
                 {
                     "id": "T1",
@@ -237,14 +286,24 @@ def classify_tasks(
                     "top_theme": "optimization" | None,
                     "matched_keywords": ["faster", "performance"],
                     "all_matches": {"optimization": [...], ...},
+                    "semantic_scores": {"optimization": 0.41, ...} | {},
+                    "semantic_top_theme": "optimization" | None,
+                    "semantic_top_score": 0.41 | None,
+                    "classified_by": "lexicon" | "semantic" | "none",
                     "label": "Aligned" | "Neutral" | "Potentially misaligned",
                     "reason": "...one-line, judge-friendly explanation...",
                 },
                 ...
             ],
         }
+
+    The extra `semantic_*` and `classified_by` fields are always
+    present so downstream callers can tell which signal produced the
+    verdict and audit the model's contribution per ticket.
     """
     normalized = _normalize(tasks)
+    classifier = _resolve_semantic_classifier(use_semantic, semantic_classifier)
+    semantic_enabled = classifier is not None
 
     aggregate: Dict[str, int] = {t: 0 for t in THEME_LEXICON}
     aggregate_tasks: Dict[str, List[str]] = {t: [] for t in THEME_LEXICON}
@@ -256,13 +315,47 @@ def classify_tasks(
         if matches:
             top_theme = max(matches, key=lambda t: len(matches[t]))
             top_hits = matches[top_theme]
+            classified_by = "lexicon"
         else:
             top_theme = None
             top_hits = []
+            classified_by = "none"
+
+        # Always record semantic evidence when the ML layer is on, so a
+        # judge can audit the model's view *and* see that the lexicon
+        # outranked it on a tie. Falling back only when the lexicon is
+        # silent keeps the existing deterministic contract intact.
+        if classifier is not None:
+            scores = classifier.score_themes(item["description"])
+            if scores:
+                sem_top_theme, sem_top_score = max(scores.items(), key=lambda kv: kv[1])
+            else:
+                sem_top_theme, sem_top_score = None, None
+
+            if (
+                top_theme is None
+                and sem_top_theme is not None
+                and sem_top_score is not None
+                and sem_top_score >= semantic_threshold
+            ):
+                top_theme = sem_top_theme
+                classified_by = "semantic"
+        else:
+            scores = {}
+            sem_top_theme = None
+            sem_top_score = None
 
         for theme, hits in matches.items():
             aggregate[theme] += len(hits)
             aggregate_tasks[theme].append(item["id"])
+
+        # When the semantic fallback supplies the top theme, count it
+        # toward the per-theme aggregate as a single "soft" hit so the
+        # backlog-wide dominant-theme tally still reflects what the
+        # ticket is actually about.
+        if classified_by == "semantic" and top_theme is not None:
+            aggregate[top_theme] += 1
+            aggregate_tasks[top_theme].append(item["id"])
 
         per_task.append({
             "id": item["id"],
@@ -270,6 +363,12 @@ def classify_tasks(
             "top_theme": top_theme,
             "matched_keywords": top_hits,
             "all_matches": matches,
+            "semantic_scores": scores,
+            "semantic_top_theme": sem_top_theme,
+            "semantic_top_score": (
+                round(sem_top_score, 4) if sem_top_score is not None else None
+            ),
+            "classified_by": classified_by,
         })
 
     # Rank dominant themes - only themes hit by at least one task qualify.
@@ -283,11 +382,28 @@ def classify_tasks(
     for task in per_task:
         top = task["top_theme"]
         hits = len(task["matched_keywords"])
+        source = task["classified_by"]
         if top is None:
             task["label"] = "Potentially misaligned"
             task["reason"] = (
+                "No theme keywords matched and the semantic model "
+                "did not pass the confidence threshold, so this ticket "
+                "doesn't obviously fit any theme of the current sprint "
+                "backlog."
+                if semantic_enabled else
                 "No theme keywords matched, so this ticket doesn't "
                 "obviously fit any theme of the current sprint backlog."
+            )
+        elif source == "semantic":
+            task["label"] = (
+                "Aligned" if top in dominant else "Neutral"
+            )
+            score = task["semantic_top_score"]
+            task["reason"] = (
+                f"Semantic model recovered top theme '{top}' "
+                f"(cosine={score:.2f}) for a ticket the lexicon could "
+                f"not match. Counted as a soft hit toward the backlog "
+                f"theme tally."
             )
         elif top in dominant and hits >= aligned_threshold:
             task["label"] = "Aligned"
@@ -316,5 +432,6 @@ def classify_tasks(
     return {
         "themes": themes_summary,
         "dominant_themes": dominant,
+        "semantic_enabled": semantic_enabled,
         "tasks": per_task,
     }

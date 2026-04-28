@@ -11,14 +11,19 @@ Public API at a glance::
         detect_intent_drift,      # intent + tasks -> drift verdict
         explain_drift,            # intent + tasks -> demo-ready text report
         THEME_LEXICON,            # rule-book: theme name -> trigger keywords
+        SemanticThemeClassifier,  # AI/ML layer: sentence-embedding theme classifier
+        get_default_classifier,   # process-wide singleton (lazy ML load)
     )
 
-Every function above is rule-based and explainable. No machine learning,
-no model weights - just keyword lists, regex, and proportion thresholds
-that you can read and tune in a few minutes.
+The pipeline is a hybrid AI + rules system. The lexicon, regex patterns,
+and proportion thresholds are the deterministic backbone you can read
+off the page; the `SemanticThemeClassifier` is a sentence-transformer
+embedding layer that recovers tickets phrased in their own words. Every
+verdict ships with the evidence (matched keywords, semantic scores,
+ticket-level reasons) that produced it - AI-powered, never a black box.
 """
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 from .intent_analyzer import (
     INTENT_THEME_BLOCKLIST,
@@ -28,6 +33,11 @@ from .intent_analyzer import (
 from .task_analyzer import THEME_LEXICON, classify_tasks, find_themes
 from .drift_detector import detect_intent_drift
 from .explainer import explain_drift
+from .semantic_classifier import (
+    SemanticThemeClassifier,
+    THEME_PROTOTYPE_DESCRIPTIONS,
+    get_default_classifier,
+)
 
 __all__ = [
     "parse_intent",
@@ -38,4 +48,7 @@ __all__ = [
     "THEME_LEXICON",
     "detect_intent_drift",
     "explain_drift",
+    "SemanticThemeClassifier",
+    "THEME_PROTOTYPE_DESCRIPTIONS",
+    "get_default_classifier",
 ]
