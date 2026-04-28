@@ -70,6 +70,31 @@ Use a different project file with `--data`:
 python -m truepath_ai.main --data path/to/your_project.json
 ```
 
+## Run the UI
+
+A polished Streamlit dashboard ([`app.py`](app.py)) wraps the same
+pipeline in a single interactive page - hero verdict card, KPI tiles,
+editable ticket backlog, theme-distribution charts, top contributors,
+recommendations, and the raw text report.
+
+```bash
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+Open the URL Streamlit prints (default `http://localhost:8501`).
+The bundled `data/sample_project.json` loads automatically. From the
+sidebar you can:
+
+- switch between the bundled sample, a JSON upload, and a JSON paste,
+- edit the project intent live and watch the verdict update,
+- tune the three drift thresholds (`aligned_min`, `drift_min`,
+  `direction_threshold`) - the same knobs `detect_intent_drift` accepts.
+
+The **Ticket Backlog** tab is editable - delete a `scaling` ticket and
+the verdict can flip from *OFF TRACK* to *ON TRACK* in real time. The
+**Raw Report** tab shows the exact text block `explain_drift()` produces.
+
 ## How it works (judge cheat-sheet)
 
 1. **Intent analysis** - `parse_intent` splits the description into
